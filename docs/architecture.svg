@@ -1,0 +1,218 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 620" width="920" height="620" font-family="-apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif">
+  <defs>
+    <!-- 渐变定义 -->
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="engineGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="elementGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#eff6ff"/>
+      <stop offset="100%" stop-color="#dbeafe"/>
+    </linearGradient>
+    <!-- 阴影 -->
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1e3a8a" flood-opacity="0.15"/>
+    </filter>
+    <filter id="softShadow" x="-3%" y="-3%" width="106%" height="110%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+    <!-- 箭头标记 -->
+    <marker id="arrowBlue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#60a5fa"/>
+    </marker>
+    <marker id="arrowGray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="920" height="620" fill="#fafbfc" rx="12"/>
+
+  <!-- ========== 标题栏 ========== -->
+  <rect x="20" y="16" width="880" height="52" rx="8" fill="url(#headerGrad)" filter="url(#shadow)"/>
+  <text x="460" y="48" text-anchor="middle" fill="#fff" font-size="19" font-weight="700">
+    工业智能数字孪生系统 · 五元架构图
+  </text>
+  <text x="460" y="62" text-anchor="middle" fill="#bfdbfe" font-size="10">
+    Industrial Intelligent Digital-Twin · Five-Element Architecture
+  </text>
+
+  <!-- ========== 双引擎层 ========== -->
+  <g transform="translate(0, 88)">
+    <!-- OGG 引擎 -->
+    <rect x="80" y="0" width="330" height="72" rx="10" fill="url(#engineGrad)" filter="url(#shadow)"/>
+    <circle cx="118" cy="36" r="18" fill="rgba(255,255,255,0.15)"/>
+    <text x="118" y="41" text-anchor="middle" fill="#fff" font-size="14">🔷</text>
+    <text x="148" y="30" fill="#fff" font-size="15" font-weight="700">华为 OGG 几何内核</text>
+    <text x="148" y="50" fill="#bfdbfe" font-size="11">Huawei Open Geometry Kernel</text>
+    <text x="148" y="65" fill="#93c5fd" font-size="10">厂房 / 设备 / 产线 三维几何建模</text>
+
+    <!-- MAS Agent 引擎 -->
+    <rect x="510" y="0" width="330" height="72" rx="10" fill="url(#engineGrad)" filter="url(#shadow)"/>
+    <circle cx="548" cy="36" r="18" fill="rgba(255,255,255,0.15)"/>
+    <text x="548" y="41" text-anchor="middle" fill="#fff" font-size="14">🤖</text>
+    <text x="578" y="30" fill="#fff" font-size="15" font-weight="700">通用 MAS Agent</text>
+    <text x="578" y="50" fill="#bfdbfe" font-size="11">Multi-Agent System</text>
+    <text x="578" y="65" fill="#93c5fd" font-size="10">多智能体协同规划 / 诊断 / 预测</text>
+
+    <!-- 双引擎之间的协作箭头 -->
+    <path d="M 415 36 L 505 36" stroke="#60a5fa" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrowBlue)" fill="none"/>
+    <rect x="435" y="24" width="50" height="18" rx="4" fill="#fff" stroke="#60a5fa" stroke-width="1"/>
+    <text x="460" y="37" text-anchor="middle" fill="#2563eb" font-size="9" font-weight="600">数据总线</text>
+  </g>
+
+  <!-- ========== 五元架构核心层 ========== -->
+  <g transform="translate(0, 184)">
+    <!-- 层标签 -->
+    <rect x="20" y="0" width="120" height="26" rx="13" fill="#2563eb"/>
+    <text x="80" y="17" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">五元架构核心</text>
+
+    <!-- 五个元素卡片 -->
+    <!-- ① 几何内核 -->
+    <g transform="translate(40, 38)">
+      <rect width="148" height="110" rx="8" fill="url(#elementGrad)" stroke="#93c5fd" stroke-width="1.5" filter="url(#softShadow)"/>
+      <rect width="148" height="28" rx="8" fill="#2563eb"/>
+      <rect x="0" y="20" width="148" height="8" fill="#2563eb"/>
+      <text x="74" y="19" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">① 几何内核</text>
+      <text x="74" y="52" text-anchor="middle" fill="#1e40af" font-size="11" font-weight="600">Geometry Kernel</text>
+      <line x1="20" y1="64" x2="128" y2="64" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="74" y="82" text-anchor="middle" fill="#475569" font-size="10">OGG 3D 建模</text>
+      <text x="74" y="97" text-anchor="middle" fill="#64748b" font-size="9">厂房·设备·产线</text>
+    </g>
+
+    <!-- ② 数据底座 -->
+    <g transform="translate(208, 38)">
+      <rect width="148" height="110" rx="8" fill="url(#elementGrad)" stroke="#93c5fd" stroke-width="1.5" filter="url(#softShadow)"/>
+      <rect width="148" height="28" rx="8" fill="#2563eb"/>
+      <rect x="0" y="20" width="148" height="8" fill="#2563eb"/>
+      <text x="74" y="19" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">② 数据底座</text>
+      <text x="74" y="52" text-anchor="middle" fill="#1e40af" font-size="11" font-weight="600">Data Bus</text>
+      <line x1="20" y1="64" x2="128" y2="64" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="74" y="82" text-anchor="middle" fill="#475569" font-size="10">SQLite + 队列</text>
+      <text x="74" y="97" text-anchor="middle" fill="#64748b" font-size="9">时序落库·持久化</text>
+    </g>
+
+    <!-- ③ 离散仿真 -->
+    <g transform="translate(376, 38)">
+      <rect width="148" height="110" rx="8" fill="url(#elementGrad)" stroke="#93c5fd" stroke-width="1.5" filter="url(#softShadow)"/>
+      <rect width="148" height="28" rx="8" fill="#2563eb"/>
+      <rect x="0" y="20" width="148" height="8" fill="#2563eb"/>
+      <text x="74" y="19" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">③ 离散仿真</text>
+      <text x="74" y="52" text-anchor="middle" fill="#1e40af" font-size="11" font-weight="600">Simulation</text>
+      <line x1="20" y1="64" x2="128" y2="64" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="74" y="82" text-anchor="middle" fill="#475569" font-size="10">SimPy 离散事件</text>
+      <text x="74" y="97" text-anchor="middle" fill="#64748b" font-size="9">产能·瓶颈·可达性</text>
+    </g>
+
+    <!-- ④ 智能规划 -->
+    <g transform="translate(544, 38)">
+      <rect width="148" height="110" rx="8" fill="url(#elementGrad)" stroke="#93c5fd" stroke-width="1.5" filter="url(#softShadow)"/>
+      <rect width="148" height="28" rx="8" fill="#2563eb"/>
+      <rect x="0" y="20" width="148" height="8" fill="#2563eb"/>
+      <text x="74" y="19" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">④ 智能规划</text>
+      <text x="74" y="52" text-anchor="middle" fill="#1e40af" font-size="11" font-weight="600">MAS Planning</text>
+      <line x1="20" y1="64" x2="128" y2="64" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="74" y="82" text-anchor="middle" fill="#475569" font-size="10">类型判定·节拍反算</text>
+      <text x="74" y="97" text-anchor="middle" fill="#64748b" font-size="9">客户化建设方案</text>
+    </g>
+
+    <!-- ⑤ 集成测评 -->
+    <g transform="translate(712, 38)">
+      <rect width="148" height="110" rx="8" fill="url(#elementGrad)" stroke="#93c5fd" stroke-width="1.5" filter="url(#softShadow)"/>
+      <rect width="148" height="28" rx="8" fill="#2563eb"/>
+      <rect x="0" y="20" width="148" height="8" fill="#2563eb"/>
+      <text x="74" y="19" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">⑤ 集成测评</text>
+      <text x="74" y="52" text-anchor="middle" fill="#1e40af" font-size="11" font-weight="600">Integration</text>
+      <line x1="20" y1="64" x2="128" y2="64" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="74" y="82" text-anchor="middle" fill="#475569" font-size="10">系统集成测试</text>
+      <text x="74" y="97" text-anchor="middle" fill="#64748b" font-size="9">取证·合规验证</text>
+    </g>
+
+    <!-- 元素间连接箭头（横向） -->
+    <path d="M 192 93 L 202 93" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowGray)" fill="none"/>
+    <path d="M 360 93 L 370 93" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowGray)" fill="none"/>
+    <path d="M 528 93 L 538 93" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowGray)" fill="none"/>
+    <path d="M 696 93 L 706 93" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowGray)" fill="none"/>
+  </g>
+
+  <!-- ========== 引擎到五元的连接线 ========== -->
+  <path d="M 245 162 L 245 178 L 114 178 L 114 218" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="4,3" fill="none" marker-end="url(#arrowBlue)"/>
+  <path d="M 675 162 L 675 178 L 786 178 L 786 218" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="4,3" fill="none" marker-end="url(#arrowBlue)"/>
+
+  <!-- ========== 四期路线 ========== -->
+  <g transform="translate(0, 360)">
+    <rect x="20" y="0" width="120" height="26" rx="13" fill="#059669"/>
+    <text x="80" y="17" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">四期落地路线</text>
+
+    <!-- 时间轴主线 -->
+    <line x1="70" y1="58" x2="850" y2="58" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- P0 -->
+    <g transform="translate(90, 42)">
+      <circle cx="0" cy="16" r="14" fill="#dbeafe" stroke="#2563eb" stroke-width="2.5"/>
+      <text x="0" y="21" text-anchor="middle" fill="#1e40af" font-size="12" font-weight="700">P0</text>
+      <text x="0" y="46" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">总体论证</text>
+      <text x="0" y="60" text-anchor="middle" fill="#64748b" font-size="9">需求规格·评审基线</text>
+    </g>
+
+    <!-- P1 -->
+    <g transform="translate(290, 42)">
+      <circle cx="0" cy="16" r="14" fill="#dbeafe" stroke="#2563eb" stroke-width="2.5"/>
+      <text x="0" y="21" text-anchor="middle" fill="#1e40af" font-size="12" font-weight="700">P1</text>
+      <text x="0" y="46" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">内核打通</text>
+      <text x="0" y="60" text-anchor="middle" fill="#64748b" font-size="9">几何+数据底座·零依赖原型</text>
+      <!-- 当前位置指示器 -->
+      <polygon points="0,-4 -6,-14 6,-14" fill="#ef4444"/>
+      <text x="0" y="-18" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="700">◀ 当前阶段</text>
+    </g>
+
+    <!-- P2 -->
+    <g transform="translate(520, 42)">
+      <circle cx="0" cy="16" r="14" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+      <text x="0" y="21" text-anchor="middle" fill="#64748b" font-size="12" font-weight="700">P2</text>
+      <text x="0" y="46" text-anchor="middle" fill="#64748b" font-size="11">仿真保真</text>
+      <text x="0" y="60" text-anchor="middle" fill="#94a3b8" font-size="9">智能层集成</text>
+    </g>
+
+    <!-- P3 -->
+    <g transform="translate(750, 42)">
+      <circle cx="0" cy="16" r="14" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+      <text x="0" y="21" text-anchor="middle" fill="#64748b" font-size="12" font-weight="700">P3</text>
+      <text x="0" y="46" text-anchor="middle" fill="#64748b" font-size="11">集成测评</text>
+      <text x="0" y="60" text-anchor="middle" fill="#94a3b8" font-size="9">系统取证·合规</text>
+    </g>
+  </g>
+
+  <!-- ========== 技术栈标注 ========== -->
+  <g transform="translate(0, 480)">
+    <rect x="20" y="0" width="880" height="52" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="45" y="20" fill="#64748b" font-size="10" font-weight="600">技术栈：</text>
+    <text x="95" y="20" fill="#334155" font-size="10">Python 3.10+</text>
+    <text x="180" y="20" fill="#334155" font-size="10">Streamlit</text>
+    <text x="250" y="20" fill="#334155" font-size="10">Plotly</text>
+    <text x="305" y="20" fill="#334155" font-size="10">NumPy / Pandas</text>
+    <text x="400" y="20" fill="#334155" font-size="10">SimPy</text>
+    <text x="450" y="20" fill="#334155" font-size="10">SQLite</text>
+    <text x="500" y="20" fill="#334155" font-size="10">Open CASCADE (OGG)</text>
+
+    <text x="45" y="40" fill="#64748b" font-size="10" font-weight="600">特性：</text>
+    <text x="85" y="40" fill="#059669" font-size="10">✓ 零外部依赖</text>
+    <text x="185" y="40" fill="#059669" font-size="10">✓ 本地可运行</text>
+    <text x="285" y="40" fill="#059669" font-size="10">✓ 5 类工厂原型</text>
+    <text x="395" y="40" fill="#059669" font-size="10">✓ 客户化规划</text>
+    <text x="495" y="40" fill="#059669" font-size="10">✓ MIT 开源</text>
+  </g>
+
+  <!-- ========== 底部信息条 ========== -->
+  <rect x="20" y="552" width="880" height="46" rx="8" fill="#1e293b"/>
+  <text x="460" y="573" text-anchor="middle" fill="#94a3b8" font-size="10">
+    工业5点0产业生态联盟 · Industrial 5.0 Industry Ecosystem Alliance
+  </text>
+  <text x="460" y="588" text-anchor="middle" fill="#64748b" font-size="9">
+    GitHub: github.com/iduyuhe/agent-digital-twin  ·  Gitee: gitee.com/i4hub/agent-digital-twin  ·  MIT License
+  </text>
+</svg>
