@@ -47,6 +47,7 @@
 - **仿真保真标定** — 蒙特卡洛 N=24 次 vs 解析基线，5 类工厂全达标 **≤±0.5%**
 - **三类智能 Agent** — 诊断 / 预测 / 决策 Agent，规则引擎兜底 + 可信性指标埋点
 - **装备级 CAE 保真** — FEM Hermite 梁元 + FDM 热传导，5 场景全 PASS **≤±0.004%**
+- **3D 实体有限元（自研替代商业求解器）** — 二十节点二次六面体 Hex20（对标 ANSYS SOLID186），纯 numpy+scipy 零 license；悬臂梁/轴向拉伸蒙特卡洛标定 **≤1%**，免 ANSYS/Abaqus 依赖
 - **集成测评套件** — 9 项端到端测试 **100% 通过率**，GB/T 8/9 条款符合，CESI L3 成熟度
 - **客户化规划器** — 输入公司名或产品描述 → 自动判定工厂类型 → 按节拍反算设备 → 生成可下载 HTML 规划书
 - **行业模板库** — 5 类工厂可复用规划模板（行业画像/典型产品/典型参数/参考KPI/孪生目标等级），一键套用生成方案，支持 JSON 导出离线复用
@@ -118,6 +119,7 @@ agent-digital-twin/
 │   ├── demo_agent_local_llm.py    # 本地 LLM Agent 演示
 │   ├── p2_intelligence.py         # P2 智能层（诊断/预测/决策 三类 Agent）
 │   ├── p2_cae_fidelity.py         # P2 装备级 CAE 保真（FEM 梁 + FDM 热传导）
+│   ├── p2_fem3d.py                # P2-C 3D 实体有限元（Hex20 二次单元，对标 ANSYS SOLID186）
 │   ├── p3_assessment.py           # P3 集成测评（系统测试 + GB/T 符合性 + 成熟度）
 │   ├── industry_templates.py      # 行业模板库（5 类工厂可复用规划模板）
 │   ├── make_demo_preview.py       # 静态预览页生成
