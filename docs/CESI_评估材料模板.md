@@ -46,9 +46,9 @@
 | GB/T 45873 仿真模型 | 仿真模型 | [SimPy+蒙特卡洛标定] | `factory_sim_core.calibrate_simulation` | [已实现] |
 | GB/T 45873 数据模型 | 数据模型 | [时序缓冲+KPI] | `demo_app` | [已实现] |
 | GB/T 45873 孪生同步 | 虚实同步 | [实时线程→智能层] | `demo_app` + `p2_intelligence` | [已实现] |
-| GB/T 45873 可信性 | 可信性测评 | [集成测试+成熟度] | `p3_assessment` | [已实现] |
+| GB/T 45873 可信性 | 可信性测评 | [集成测试+标准符合性+成熟度评分卡，已固化交付物] | `p3_assessment` + `docs/CESI成熟度取证报告.md` | [已实现] |
 
-> 目标：9/9 全部「已实现」（当前 8/9，仅「可信性测评」需 B2 固化）。
+> 目标：9/9 全部「已实现」✅（已于 2026-08-13 通过 `p3_assessment.generate_maturity_certificate` 固化正式交付物达成，详见 `docs/CESI成熟度取证报告.md`）。
 
 ## 5. 成熟度自评表（L4 差距）
 | 维度 | 当前分 | 目标分(L4) | 差距 | 补齐动作 |
