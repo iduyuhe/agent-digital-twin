@@ -31,6 +31,7 @@ import planner_core as pc
 import demo_app as da   # 复用几何/传感/3D/数据底座渲染函数
 import p2_intelligence as pi   # P2 智能保真层（诊断/预测/决策 三类 Agent）
 import p2_cae_fidelity as cae   # P2 装备级CAE保真（梁/热 FEM+FDM 标定）
+import p3_assessment as p3       # P3 集成测评（系统测试 + GB/T 符合性 + 成熟度）
 
 # 复用 demo_app 的配色与渲染原语
 BLUE = da.BLUE
@@ -527,6 +528,92 @@ def render_p2():
 
 
 # ============================================================
+# 模式④：P3 集成测评（系统测试 + 标准符合性 + 成熟度取证）
+# ============================================================
+@st.cache_data(show_spinner="P3 集成测评运行中（系统集成测试 + GB/T 符合性 + 成熟度取证）…")
+def _cached_assessment():
+    """缓存整套 P3 测评结果（避免每次 3 秒刷新重算；首次加载约 10~15s）。"""
+    return p3.run_full_assessment()
+
+
+def render_p3():
+    st.markdown(
+        '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;'
+        'padding:12px 16px;margin-bottom:14px;font-size:13px;color:#1e40af;">'
+        '🛡️ <b>P3 集成测评</b>：把 P1 几何/数据底座 + P2-A1 仿真保真 + P2-A2 智能层 + '
+        'P2-B CAE 保真 串成系统级测评流水线 —— ① 端到端集成测试（9 项断言）；'
+        '② GB/T 45626 / 45873-2025 标准符合性映射；③ CESI 可信性成熟度取证（L0~L4）。'
+        '结果实时缓存，刷新即看。</div>',
+        unsafe_allow_html=True)
+
+    rep = _cached_assessment()
+    s = rep["tests"]["summary"]
+    m = rep["maturity"]
+
+    # ---- 顶部 KPI ----
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.markdown(kpi_card(f"{s['pass_rate']:.0f}%", "集成测试通过率",
+                             idx_color=GREEN if s["failed"] == 0 else ORANGE),
+                    unsafe_allow_html=True)
+    with c2:
+        st.markdown(kpi_card(f"{rep['gb_t_implemented']}", "GB/T 条款符合"),
+                    unsafe_allow_html=True)
+    with c3:
+        st.markdown(kpi_card(f"{m['overall']}", "CESI 综合评分",
+                             idx_color=BLUE), unsafe_allow_html=True)
+    with c4:
+        st.markdown(kpi_card(f"{m['level']}", "成熟度等级", idx_color=BLUE),
+                    unsafe_allow_html=True)
+    st.caption(f"报告生成：{rep['generated_at']} ｜ 综合成熟度：{m['level']} "
+               f"{m['level_name']}")
+
+    # ---- P3-A 集成测试结果 ----
+    st.divider()
+    st.markdown('<div style="font-size:14px;font-weight:600;color:%s;margin:8px 0 6px;">'
+                '🔧 P3-A 系统集成测试（%d/%d 通过）</div>' % (BLUE, s["passed"], s["total"]),
+                unsafe_allow_html=True)
+    for t in rep["tests"]["results"]:
+        icon = "✅" if t["passed"] else "❌"
+        col = "#16a34a" if t["passed"] else "#dc2626"
+        st.markdown(
+            f'<div style="border-left:3px solid {col};padding:4px 10px;margin:4px 0;'
+            f'background:#f8fafc;border-radius:0 6px 6px 0;font-size:12px;">'
+            f'<b>{icon} {t["name"]}</b> '
+            f'<span style="color:#6b7280">[{t["group"]} · {t["elapsed_ms"]:.0f}ms]</span><br>'
+            f'<span style="color:#374151">{t["detail"]}</span></div>',
+            unsafe_allow_html=True)
+
+    # ---- P3-B GB/T 符合性 ----
+    st.divider()
+    st.markdown('<div style="font-size:14px;font-weight:600;color:%s;margin:8px 0 6px;">'
+                '📜 P3-B GB/T 标准符合性映射</div>' % BLUE, unsafe_allow_html=True)
+    for c in rep["compliance"]:
+        tag_color = "#16a34a" if c["status"] == "已实现" else "#d97706"
+        st.markdown(
+            f'<div style="display:flex;gap:8px;align-items:baseline;margin:3px 0;font-size:12px;">'
+            f'<span style="background:{tag_color};color:#fff;padding:1px 6px;border-radius:4px;'
+            f'font-size:10px;white-space:nowrap;">{c["status"]}</span>'
+            f'<b style="color:#1e40af;">{c["clause"]}</b> '
+            f'<span style="color:#374151">{c["title"]}</span> '
+            f'<span style="color:#9ca3af">→ {c["evidence"]}（{c["module"]}）</span></div>',
+            unsafe_allow_html=True)
+
+    # ---- P3-C CESI 成熟度评分卡 ----
+    st.divider()
+    st.markdown('<div style="font-size:14px;font-weight:600;color:%s;margin:8px 0 6px;">'
+                '🏅 P3-C CESI 可信性成熟度取证（综合 %d/100 → %s）</div>'
+                % (BLUE, m["overall"], m["level"]), unsafe_allow_html=True)
+    for dim, score in m["dimensions"].items():
+        # 维度分以百分制展示（value 已是 0~1 区间的百分值 → 转 0~1 给 _metric_bar）
+        st.markdown(_metric_bar(dim, score / 100.0, 0.75, True,
+                                fmt="{:.0f}"), unsafe_allow_html=True)
+    st.caption(f"成熟度模型：L0 概念验证 → L1 几何描述 → L2 数据同步 → "
+               f"L3 仿真/预测孪生（当前）→ L4 自主/认知孪生。几何保真分受限于演示级 "
+               f"NumPy 网格（正式版接入 OGG/OCCT 后提升）。")
+
+
+# ============================================================
 # 入口
 # ============================================================
 def main():
@@ -546,7 +633,7 @@ def main():
     # 顶部模式切换（标准DEMO 默认在前；新增 P2 智能保真作为第三阶段能力入口）
     mode = st.radio(
         "展示模式",
-        options=["标准DEMO", "客户定制", "智能保真（P2）"],
+        options=["标准DEMO", "客户定制", "智能保真（P2）", "集成测评（P3）"],
         index=0,
         horizontal=True,
         key="mode",
@@ -559,8 +646,10 @@ def main():
         render_standard()
     elif mode == "客户定制":
         render_custom()
-    else:
+    elif mode == "智能保真（P2）":
         render_p2()
+    else:
+        render_p3()
 
     # 自动刷新（每 3 秒，降低 CPU 占用 + 避免首屏超时）
     time.sleep(3.0)

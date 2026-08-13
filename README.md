@@ -114,6 +114,7 @@ agent-digital-twin/
 │   ├── demo_agent_local_llm.py    # 本地 LLM Agent 演示
 │   ├── p2_intelligence.py         # P2 智能层（诊断/预测/决策 三类 Agent）
 │   ├── p2_cae_fidelity.py         # P2 装备级 CAE 保真（FEM 梁 + FDM 热传导）
+│   ├── p3_assessment.py           # P3 集成测评（系统测试 + GB/T 符合性 + 成熟度）
 │   ├── make_demo_preview.py       # 静态预览页生成
 │   └── mes_export_sample.csv      # MES 样例数据
 │
@@ -153,8 +154,8 @@ agent-digital-twin/
 |------|------|------|------|
 | **P0** | 总体论证 | 需求规格、标准符合性、方案评审基线 | ✅ 已完成 |
 | **P1** | 内核打通 | 几何内核 + 数据底座打通（零依赖原型） | ✅ 已完成 & 公开 |
-| **P2** | 仿真保真 | 仿真精度提升 + MAS 智能层集成 + CAE 保真 | 🔵 **当前阶段** |
-| **P3** | 集成测评 | 系统集成测试、取证、合规验证 | ⏳ 待启动 |
+| **P2** | 仿真保真 | 仿真精度提升 + MAS 智能层集成 + CAE 保真 | ✅ 已完成 |
+| **P3** | 集成测评 | 系统集成测试、取证、合规验证 | 🔵 **当前阶段** |
 
 ---
 
