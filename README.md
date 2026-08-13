@@ -49,7 +49,8 @@
 - **装备级 CAE 保真** — FEM Hermite 梁元 + FDM 热传导，5 场景全 PASS **≤±0.004%**
 - **3D 实体有限元（自研替代商业求解器）** — 二十节点二次六面体 Hex20（对标 ANSYS SOLID186），纯 numpy+scipy 零 license；悬臂梁/轴向拉伸蒙特卡洛标定 **≤1%**，免 ANSYS/Abaqus 依赖
 - **动力学求解器（自研替代商业求解器）** — 模态分析（eigsh 广义特征问题）+ 瞬态 Newmark-β 平均加速度法，固有频率对标 Euler-Bernoulli **≤0.8%**、阶跃响应动态放大系数 DAF=1.988（解析 2.000，误差 0.6%），免 ANSYS Modal/Transient 依赖
-- **集成测评套件** — 9 项端到端测试 **100% 通过率**，GB/T 8/9 条款符合，CESI L3 成熟度
+- **集成测评套件** — 9 项端到端测试 **100% 通过率**，GB/T 8/9 条款符合，CESI 自评 L3（综合 88/100）
+- **L4 闭环自治演示（自主优化硬证据）** — `p4_closed_loop`：数字孪生监测瓶颈 → **系统自主**增资 → 重仿验证 → 记录决策日志；机加工 +13% / 半导体 +65% / 汽车 +26% 产能，补 L3→L4 的「虚实互驱闭环」缺口（详见 `docs/CESI_L4_行动方案.md`）
 - **客户化规划器** — 输入公司名或产品描述 → 自动判定工厂类型 → 按节拍反算设备 → 生成可下载 HTML 规划书
 - **行业模板库** — 5 类工厂可复用规划模板（行业画像/典型产品/典型参数/参考KPI/孪生目标等级），一键套用生成方案，支持 JSON 导出离线复用
 - **数据源适配层** — SimulatedSource(默认) / CsvFileSource(MES回放) / MesRestSource(占位)，上线真实系统无缝切换
@@ -122,6 +123,7 @@ agent-digital-twin/
 │   ├── p2_cae_fidelity.py         # P2 装备级 CAE 保真（FEM 梁 + FDM 热传导）
 │   ├── p2_fem3d.py                # P2-C 3D 实体有限元（Hex20 二次单元，对标 ANSYS SOLID186）+ 动力学（模态/瞬态）
 │   ├── p3_assessment.py           # P3 集成测评（系统测试 + GB/T 符合性 + 成熟度）
+│   ├── p4_closed_loop.py          # P4 闭环自治（L4 自主优化硬证据：监测→自主增资→重仿验证）
 │   ├── industry_templates.py      # 行业模板库（5 类工厂可复用规划模板）
 │   ├── make_demo_preview.py       # 静态预览页生成
 │   └── mes_export_sample.csv      # MES 样例数据

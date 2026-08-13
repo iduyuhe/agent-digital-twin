@@ -34,6 +34,7 @@ import p2_cae_fidelity as cae   # P2 装备级CAE保真（梁/热 FEM+FDM 标定
 import p2_fem3d as fem3d         # P2-C 3D 实体有限元（Hex20 二次单元，对标 ANSYS SOLID186）
 import industry_templates as itpl   # 行业模板库（5 类工厂规划模板，一键套用）
 import p3_assessment as p3       # P3 集成测评（系统测试 + GB/T 符合性 + 成熟度）
+import p4_closed_loop as p4       # P4 闭环自治（L4 自主优化硬证据：监测→自主增资→重仿验证）
 
 # 复用 demo_app 的配色与渲染原语
 BLUE = da.BLUE
@@ -733,6 +734,51 @@ def render_p3():
     st.caption(f"成熟度模型：L0 概念验证 → L1 几何描述 → L2 数据同步 → "
                f"L3 仿真/预测孪生（当前）→ L4 自主/认知孪生。几何保真分受限于演示级 "
                f"NumPy 网格（正式版接入 OGG/OCCT 后提升）。")
+
+    # ---- P3-D L4 闭环自治（自主优化硬证据）----
+    st.divider()
+    st.markdown('<div style="font-size:14px;font-weight:600;color:#7c3aed;margin:8px 0 6px;">'
+                '🔁 P3-D L4 闭环自治演示（自主/认知孪生的核心证据）</div>',
+                unsafe_allow_html=True)
+    st.markdown(
+        '<div style="font-size:12px;color:#4b5563;margin-bottom:8px;">'
+        '数字孪生实时监测产线 → 识别瓶颈工位（利用率超限）→ <b>系统自主</b>在瓶颈增资 → '
+        '自动写回现场并重仿真 → 验证产能提升、瓶颈缓解。这正是 L3（预测+给人建议）'
+        '与 L4（自主优化+虚实互驱闭环）的分水岭。</div>',
+        unsafe_allow_html=True)
+    _p4_ft = st.selectbox("选择工厂类型（L4 闭环）",
+                          [k for k, _ in fs.list_factories()],
+                          format_func=lambda k: fs.FACTORY_LIBRARY[k]["display"],
+                          key="p4_factory")
+    _p4_run = st.button("运行 L4 闭环自治演示", key="p4_run_btn")
+    if _p4_run:
+        with st.spinner("闭环自治运行中（监测→自主决策→重仿验证）..."):
+            res = p4.run_closed_loop(_p4_ft, target_util=0.85, max_iter=4)
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            st.markdown(kpi_card(f"{res['throughput_uplift_pct']:+.1f}%", "产能提升",
+                                 idx_color=GREEN), unsafe_allow_html=True)
+        with c2:
+            st.markdown(kpi_card(f"{res['baseline_bottleneck_util']*100:.0f}%→"
+                                 f"{res['final_bottleneck_util']*100:.0f}%",
+                                 "瓶颈利用率", idx_color=BLUE), unsafe_allow_html=True)
+        with c3:
+            st.markdown(kpi_card(f"{res['added_machines_total']}", "自主增资台数",
+                                 idx_color=BLUE), unsafe_allow_html=True)
+        with c4:
+            st.markdown(kpi_card("闭环" if res["converged"] else "未收敛",
+                                 "闭环状态", idx_color=GREEN if res["converged"] else ORANGE),
+                        unsafe_allow_html=True)
+        try:
+            st.plotly_chart(p4.closed_loop_plotly(res), use_container_width=True)
+        except Exception as e:
+            st.warning(f"L4 闭环图渲染失败：{e}")
+        with st.expander("查看闭环决策日志"):
+            for step in res["decision_log"]:
+                st.markdown(f"· 第{step['iter']}轮：{step['action']} "
+                            f"→ 产能 {step['throughput_per_h']:.1f} 件/时，"
+                            f"瓶颈利用率 {step['bottleneck_util']*100:.1f}%")
+
 
 
 # ============================================================
