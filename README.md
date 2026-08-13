@@ -49,6 +49,7 @@
 - **装备级 CAE 保真** — FEM Hermite 梁元 + FDM 热传导，5 场景全 PASS **≤±0.004%**
 - **集成测评套件** — 9 项端到端测试 **100% 通过率**，GB/T 8/9 条款符合，CESI L3 成熟度
 - **客户化规划器** — 输入公司名或产品描述 → 自动判定工厂类型 → 按节拍反算设备 → 生成可下载 HTML 规划书
+- **行业模板库** — 5 类工厂可复用规划模板（行业画像/典型产品/典型参数/参考KPI/孪生目标等级），一键套用生成方案，支持 JSON 导出离线复用
 - **数据源适配层** — SimulatedSource(默认) / CsvFileSource(MES回放) / MesRestSource(占位)，上线真实系统无缝切换
 
 ---
@@ -118,6 +119,7 @@ agent-digital-twin/
 │   ├── p2_intelligence.py         # P2 智能层（诊断/预测/决策 三类 Agent）
 │   ├── p2_cae_fidelity.py         # P2 装备级 CAE 保真（FEM 梁 + FDM 热传导）
 │   ├── p3_assessment.py           # P3 集成测评（系统测试 + GB/T 符合性 + 成熟度）
+│   ├── industry_templates.py      # 行业模板库（5 类工厂可复用规划模板）
 │   ├── make_demo_preview.py       # 静态预览页生成
 │   └── mes_export_sample.csv      # MES 样例数据
 │

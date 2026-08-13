@@ -31,6 +31,7 @@ import planner_core as pc
 import demo_app as da   # 复用几何/传感/3D/数据底座渲染函数
 import p2_intelligence as pi   # P2 智能保真层（诊断/预测/决策 三类 Agent）
 import p2_cae_fidelity as cae   # P2 装备级CAE保真（梁/热 FEM+FDM 标定）
+import industry_templates as itpl   # 行业模板库（5 类工厂规划模板，一键套用）
 import p3_assessment as p3       # P3 集成测评（系统测试 + GB/T 符合性 + 成熟度）
 
 # 复用 demo_app 的配色与渲染原语
@@ -252,6 +253,43 @@ def render_custom():
         '标准蓝图 + 您的参数 = 您的方案。</div>',
         unsafe_allow_html=True)
 
+    # ── 行业模板库（一键套用典型参数）──
+    st.markdown("### 🏭 行业模板库（沉淀自 5 类工厂原型，可复用规划）")
+    tpl_keys = [k for k, _, _ in itpl.list_industry_templates()]
+    tpl_options = ["（自定义，不套用）"] + tpl_keys
+    tpl_labels = ["（自定义，不套用）"] + [
+        f"{d} · {'/'.join(itpl.get_template(k)['industry_tags'][:2])}" for k, d, _ in itpl.list_industry_templates()
+    ]
+    tpl_sel = st.selectbox("选择行业模板", tpl_labels, index=0, key="c_tpl")
+
+    # 映射回 key
+    if tpl_sel == "（自定义，不套用）":
+        tpl_key = None
+        st.session_state.pop("c_tpl_lock", None)
+    else:
+        tpl_key = tpl_keys[tpl_labels.index(tpl_sel) - 1]
+        tpl = itpl.get_template(tpl_key)
+        c_t1, c_t2 = st.columns(2)
+        with c_t1:
+            st.caption(f"**标签**：{' / '.join(tpl['industry_tags'])}")
+            st.caption(f"**孪生目标**：{tpl['twin_target_level']}")
+        with c_t2:
+            st.caption(f"**典型产品**：{'、'.join(tpl['typical_products'][:3])}")
+            st.caption(f"**参考KPI**：{tpl['reference_kpi']['station_count']}工站 / "
+                       f"基线{tpl['reference_kpi']['base_machine_count']}台 / "
+                       f"设计{tpl['reference_kpi']['designed_capacity_per_h']:.0f}件·时⁻¹")
+        if st.button("📋 套用此模板的典型产品与参数", type="secondary", key="c_apply_tpl"):
+            ap = itpl.apply_template(tpl_key)
+            st.session_state["c_product"] = ap["product"]
+            st.session_state["c_annual"] = ap["params"]["annual_volume_wan"]
+            st.session_state["c_shifts"] = ap["params"]["shifts"]
+            st.session_state["c_wdays"] = ap["params"]["working_days"]
+            st.session_state["c_hps"] = ap["params"]["hours_per_shift"]
+            st.session_state["c_fp"] = ap["params"]["footprint"] or 0
+            st.session_state["c_auto"] = ap["params"]["automation"] or 0
+            st.session_state["c_tpl_lock"] = tpl_key   # 锁定原型，避免描述微调误判
+            st.rerun()
+
     # 输入区
     c1, c2 = st.columns(2)
     with c1:
@@ -276,17 +314,47 @@ def render_custom():
     run = st.button("🚀 生成客户化规划", type="primary", use_container_width=True, key="c_run")
 
     if run:
-        if not product.strip():
-            st.error("请至少填写『核心产品/生产工艺描述』，这是工厂类型判定的依据。")
+        # ── 行业模板自动套用逻辑：选了模板且产品为空 → 自动用模板参数 ──
+        tpl_label = st.session_state.get("c_tpl", "（自定义，不套用）")
+        tpl_keys = [k for k, _, _ in itpl.list_industry_templates()]
+        type_override = None
+        if tpl_label != "（自定义，不套用）" and tpl_label in [
+            f"{d} · {'/'.join(itpl.get_template(k)['industry_tags'][:2])}"
+            for k, d, _ in itpl.list_industry_templates()
+        ]:
+            idx = [
+                f"{d} · {'/'.join(itpl.get_template(k)['industry_tags'][:2])}"
+                for k, d, _ in itpl.list_industry_templates()
+            ].index(tpl_label)
+            tpl_key = tpl_keys[idx]
+            type_override = tpl_key
+            # 产品为空时自动用模板描述（含行业关键词保判定一致）
+            if not product.strip():
+                ap = itpl.apply_template(tpl_key)
+                product = ap["product"]
+                params = ap["params"]
+                st.info(f"已使用「{fs.FACTORY_LIBRARY[tpl_key]['display']}」行业模板的典型产品与参数。"
+                        f"您也可修改上方表单后重新生成。")
+            else:
+                params = {
+                    "annual_volume_wan": annual, "shifts": shifts,
+                    "working_days": wdays, "hours_per_shift": hps,
+                    "footprint": footprint if footprint > 0 else "",
+                    "automation": automation if automation > 0 else "",
+                }
+        elif not product.strip():
+            st.error("请至少填写『核心产品/生产工艺描述』或选择一个行业模板。")
             st.stop()
-        params = {
-            "annual_volume_wan": annual, "shifts": shifts, "working_days": wdays,
-            "hours_per_shift": hps,
-            "footprint": footprint if footprint > 0 else "",
-            "automation": automation if automation > 0 else "",
-        }
+        else:
+            params = {
+                "annual_volume_wan": annual, "shifts": shifts, "working_days": wdays,
+                "hours_per_shift": hps,
+                "footprint": footprint if footprint > 0 else "",
+                "automation": automation if automation > 0 else "",
+            }
         with st.spinner("正在判定工厂原型并仿真验证…"):
-            plan = pc.derive_plan(company=company, website=website, product=product, params=params)
+            plan = pc.derive_plan(company=company, website=website, product=product,
+                                  params=params, type_override=type_override)
         st.session_state["c_plan"] = plan
 
     if "c_plan" in st.session_state:

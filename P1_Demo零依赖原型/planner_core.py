@@ -51,7 +51,7 @@ def detect_factory_type(text):
 # ============================================================
 # 2. 客户参数 → 反算设备配置 + 仿真验证
 # ============================================================
-def derive_plan(company="", website="", product="", params=None):
+def derive_plan(company="", website="", product="", params=None, type_override=None):
     """
     params: dict{
       annual_volume_wan: 目标年产量(万件/年),
@@ -61,6 +61,7 @@ def derive_plan(company="", website="", product="", params=None):
       footprint: 厂房面积(㎡, 可选),
       automation: 自动化率(%, 可选),
     }
+    type_override: 强制指定工厂原型 key（行业模板套用时锁定，避免描述微调误判）。
     返回完整规划 dict，供 UI 与 HTML 导出复用。
     """
     params = params or {}
@@ -77,7 +78,11 @@ def derive_plan(company="", website="", product="", params=None):
     target_cap_h = 60.0 / T if T > 0 else 0.0  # 设计产能(件/时)
 
     # 工厂原型
-    type_key, reason = detect_factory_type(product or company)
+    if type_override and type_override in fs.FACTORY_LIBRARY:
+        type_key = type_override
+        reason = f"由行业模板锁定原型：{fs.FACTORY_LIBRARY[type_key]['display']}"
+    else:
+        type_key, reason = detect_factory_type(product or company)
     spec = fs.get_factory_spec(type_key)
     display = spec["display"]
 
