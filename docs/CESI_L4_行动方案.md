@@ -12,37 +12,32 @@
 
 | 成熟度维度 | 当前得分 | 说明 |
 |-----------|---------|------|
-| 几何保真 | **70** | 演示级 NumPy 网格；若接入 OpenCASCADE 自动计 85 |
+| 几何保真 | **85** | OCCT (OpenCASCADE) B-rep 几何内核已启用（conda-forge pythonocc-core 7.8.1） |
 | 仿真保真 | 95 | 5 类工厂蒙特卡洛标定全 PASS |
 | 数据保真 | **90** | 实时传感底座 + A2 质量保障层（多源接入/Schema 校验/缺失异常检测/时延吞吐遥测） |
 | 智能保真 | 95 | 诊断/预测/决策三类 Agent 埋点指标高 |
 | 可信性 | 100 | P3-A 集成测试通过率 100% |
-| **综合（均值）** | **90** | **→ L4（自主/认知孪生）** |
+| **综合（均值）** | **93** | **→ L4（自主/认知孪生）** |
 
 **L4 门槛**：综合 ≥ 90。
 
 **关键洞察**：
-- 几何保真（70）与 数据保真（80）是唯二拖后腿的维度。
-- 代码侧 `几何保真` 由 `p2_cae_fidelity.HAS_OCC` 开关直接控制：**接入 OCCT → 70 跳 85**，综合即从 88 升至 **91**，自评直接跨过 L4 门槛（≤ 一天工作量）。
-- 但 **L4 的定性要求是「自主优化 + 虚实互驱闭环」**，维度分数并不度量它——当前系统只做到「预测 + 给人建议」（L3 行为）。这条必须靠 **A3（闭环自治演示）** 补齐，它是评审中最有说服力的硬证据。
+- 几何保真（**85**，OCCT 已启用）与 数据保真（90，A2 已完成）均已达标。
+- 代码侧 `几何保真` 由 `p2_cae_fidelity.HAS_OCC` 开关控制：**conda-forge pythonocc-core 7.8.1（novtk 变体）已装在 `pyocc` 环境（Python 3.11, Miniconda3）**，实测 `import OCC.Core` 成功 + 3D 几何体创建通过。
+- **L4 的定性要求是「自主优化 + 虚实互驱闭环」**——A3（闭环自治演示）已补齐，是评审中最有说服力的硬证据。
+- **Phase 1 内部自评 L4 已全部完成：综合 93/100，GB/T 9/9，闭环自治证据齐备。**
 
 ---
 
 ## 2. 六项可执行动作
 
-### A1 · 启用 OCCT 几何引擎（分数杠杆 · 最快）
-- **动作**：在 Python 3.11 虚拟环境安装 `pythonocc-core`，使 `p2_cae_fidelity.HAS_OCC = True`，运行 `p3_assessment` 验证维度变化。
-- **为什么**：代码已内置 `HAS_OCC` 开关（有 OCCT→几何 85，无→70）。当前托管 venv 是 3.13，`pythonocc-core` 无对应分发；需新建 py3.11 环境。
-- **精确步骤**：
-  ```bash
-  # 在 3.11 环境（conda 或独立 venv）中：
-  python -m venv venv311 && venv311\Scripts\activate
-  pip install pythonocc-core==7.8.1        # 提供 7.x 的 py3.11 预编译 wheel
-  # 跑测评确认：
-  python p3_assessment.py                  # 期望：几何保真=85，综合=91
-  ```
+### A1 · 启用 OCCT 几何引擎（分数杠杆 · 最快）✅ 已完成
+- **动作**：通过 **conda-forge** 安装 `pythonocc-core=7.8.1`（novtk 变体，来自清华 conda-forge 镜像），绕过 pip wheel 网络阻塞。
+- **落地环境**：Miniconda3 → `pyocc` 专用环境（Python 3.11.15），路径 `C:\Users\Administrator\miniconda3\envs\pyocc`
+- **验证结果**：`from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeBox` 成功创建 3D 几何体；`p3_assessment` 实测 `HAS_OCC=True`、几何保真=85、综合=93。
+- **使用方式**：Anaconda Prompt → `conda activate pyocc` → 运行 Python 代码
 - **责任人**：研发 ｜ **工作量**：0.5 天 ｜ **优先级**：P0（最高）
-- **验收**：`几何保真=85` 且 `综合≥91`（自评 L4）。
+- **验收**：✅ `几何保真=85` 且 `综合=93≥91`（自评 L4）。
 
 ### A2 · 数据保真 80 → 90（分数杠杆 · 次快）✅ 已完成
 - **动作**：新建 `p5_data_quality.py` 数据保真强化层，把 P1 实时传感底座从「仅缓冲」升级为「带质量保障的实时数据底座」：
@@ -97,13 +92,13 @@
 ## 3. 推进节奏
 
 ```
-Phase 1（本周内 · 内部可达「自评 L4」）
-  A3 ✅  →  A1(待 OCCT wheel)  →  A2 ✅  →  B2 ✅
-  结果：综合 88 → 90（已跨 L4 门槛；A1 的 OCCT 一旦装上几何 70→85，
-        综合将再跳至 91），GB/T 9/9，闭环自治证据齐备
+Phase 1（本周内 · 内部可达「自评 L4」）✅ 全部完成
+  A3 ✅  →  A1 ✅(conda-forge OCCT)  →  A2 ✅  →  B2 ✅
+  结果：综合 88 → 93（L4），几何 70→85，数据保真 80→90，
+        GB/T 9/9，闭环自治证据齐备
         （内部自评 L4，可作为销售/投标的「自证」材料）
-  ★ 已于 2026-08-13 随 v1.5.0 双平台发布（GitHub tag v1.5.0 + Release /
-    Gitee Release id 795554），commit efdfdbb
+  ★ v1.5.0 已双平台发布（GitHub Release id 369824515 /
+    Gitee Release id 795554）；A1 收口待随下一版提交
 
 Phase 2（1–2 月 · 真实取证）
   B1（材料包）  →  B3（正式申请 + 评审 + 整改 + 获证）
@@ -131,8 +126,8 @@ Phase 2（1–2 月 · 真实取证）
 - ✅ A3 闭环自治演示（L4 硬证据）
 - ✅ 评分模型与基线已建立（P3-C）
 - ✅ B2 GB/T 第 9 项闭环（符合性 8/9 → 9/9，已固化取证交付物）
-- ✅ A2 数据保真强化（`p5_data_quality` 落地，`数据保真 80→90`，综合 88→90 跨 L4 门槛）
+- ✅ A2 数据保真强化（`p5_data_quality` 落地，`数据保真 80→90`）
+- ✅ A1 OCCT 几何引擎（conda-forge `pythonocc-core=7.8.1` novtk 已装在 Miniconda3 `pyocc` 环境，几何 70→85，综合 90→93）
 - ✅ v1.5.0 双平台发布（GitHub tag v1.5.0 + Release id 369824515 / Gitee Release id 795554，commit efdfdbb）
-- 🟡 A1 OCCT 几何引擎（py3.11 环境已建好并验证可导入项目，但 `pythonocc-core` wheel 在当前沙箱网络下所有可用镜像均缺失、pypi.org 直连亦返回坏数据，**无法下载**；待网络可达或离线传入 wheel 后补全，几何 70→85、综合再跳 91）
 - ⬜ B1 评估材料包（模板见 `docs/CESI_评估材料模板.md`）
 - ⬜ B3 正式取证（需商务介入）
