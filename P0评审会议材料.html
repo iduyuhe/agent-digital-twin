@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P0 评审会议材料</title>
+<style>
+  :root{
+    --blue:#2563eb; --ink:#0f172a; --gray:#475569; --line:#e2e8f0; --bg:#f8fafc;
+    --soft-blue:#eff6ff; --soft-gray:#f1f5f9; --amber:#f59e0b; --green:#15803d;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--ink);background:#fff;line-height:1.72;font-size:14.5px;}
+  .wrap{max-width:1000px;margin:0 auto;padding:44px 36px 80px;}
+  h1{font-size:24px;line-height:1.32;margin:0 0 4px;letter-spacing:-.3px;}
+  .sub{color:var(--gray);font-size:13px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:16px;}
+  h2{font-size:19px;margin:40px 0 12px;padding-left:12px;border-left:4px solid var(--blue);}
+  h3{font-size:15px;margin:20px 0 6px;color:var(--blue);}
+  p{margin:8px 0;}
+  .lead{font-size:14px;color:var(--gray);}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.2px;}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top;}
+  th{background:var(--soft-gray);font-weight:700;color:#1e293b;}
+  tr:nth-child(even) td{background:var(--bg);}
+  .note{background:var(--soft-gray);border-left:4px solid var(--gray);padding:11px 15px;margin:14px 0;font-size:13px;color:var(--gray);}
+  .warn{background:#fffbeb;border-left:4px solid var(--amber);padding:11px 15px;margin:14px 0;font-size:13px;}
+  .pill{display:inline-block;background:var(--soft-blue);color:var(--blue);font-size:11px;font-weight:700;
+    padding:2px 8px;border-radius:999px;margin:2px 4px 2px 0;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .card b{color:var(--blue);}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0;}
+  .grid .box{background:var(--soft-blue);border:1px solid #bfdbfe;border-radius:10px;padding:14px;}
+  .grid .box .t{font-size:13px;font-weight:800;color:var(--blue);margin-bottom:4px;}
+  .grid .box .d{font-size:13px;color:var(--gray);}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:12px 0;}
+  .steps li{counter-increment:s;position:relative;padding:10px 0 10px 44px;border-bottom:1px dashed var(--line);}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:8px;width:30px;height:30px;
+    background:var(--blue);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;}
+  .steps li b{color:var(--blue);}
+  .ppt{counter-reset:p;list-style:none;padding:0;margin:12px 0;}
+  .ppt li{counter-increment:p;position:relative;padding:9px 0 9px 40px;border-bottom:1px solid var(--line);}
+  .ppt li::before{content:"P" counter(p);position:absolute;left:0;top:9px;font-size:11px;font-weight:800;color:#fff;background:#0ea5e9;
+    padding:2px 6px;border-radius:5px;}
+  .sig{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 30px;margin:14px 0;}
+  .sig .row{border-bottom:1px solid var(--line);padding:18px 4px 4px;font-size:13px;}
+  .sig .role{color:var(--gray);font-size:12px;}
+  footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#94a3b8;}
+  .divider{margin:46px 0 0;border-top:2px dashed var(--blue);padding-top:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>P0 评审会议材料</h1>
+<div class="sub">智能数字孪生系统建设项目 · P0 立项评审 · 2026-08-07 · 配套《P0 需求规格与标准符合性基线》v1.0</div>
+
+<div class="note"><b>本材料用途：</b>用于 P0 立项评审会。会上目标是<b>确认四项固化要素</b>、<b>拍板六项待确认项</b>、<b>签署基线</b>，签署后即触发 P1。材料分两部分：<b>第一部分</b>为一页式评审汇报（会议投屏/打印）；<b>第二部分</b>为正式 PPT deck 的章节骨架（如需制作幻灯片按此落地）。</div>
+
+<!-- ============ 第一部分 ============ -->
+<h2>第一部分 · P0 评审汇报（一页式 · 会议投屏）</h2>
+
+<h3>1.1 评审议程（建议 60 分钟）</h3>
+<table>
+  <tr><th style="width:8%">#</th><th style="width:32%">环节</th><th style="width:14%">时长</th><th>产出</th></tr>
+  <tr><td>1</td><td>项目背景与目标</td><td>8 min</td><td>共识项目定位</td></tr>
+  <tr><td>2</td><td>技术路线与五元架构</td><td>10 min</td><td>认可技术选型</td></tr>
+  <tr><td>3</td><td>标准符合性规划</td><td>8 min</td><td>认可对标口径</td></tr>
+  <tr><td>4</td><td>量化验收基线</td><td>8 min</td><td>认可签约条款</td></tr>
+  <tr><td>5</td><td><b>待确认项拍板 + 基线签署</b></td><td>18 min</td><td><b>签署生效</b></td></tr>
+  <tr><td>6</td><td>P1 启动安排</td><td>8 min</td><td>排期与资源</td></tr>
+</table>
+
+<h3>1.2 一页纸结论（四项固化要素）</h3>
+<div class="grid">
+  <div class="box"><div class="t">① 目标场景</div><div class="d">装备 + 车间 + 工厂级（新建验证 + 存量优化双场景），覆盖"装备—车间—工厂"三层。</div></div>
+  <div class="box"><div class="t">② 技术路线</div><div class="d">OGG 几何内核（锁定）+ Agent 通用 MAS 接口（解耦）+ 仿真保真层 + 实时数据底座 + 模型验证体系。</div></div>
+  <div class="box"><div class="t">③ 保真等级</div><div class="d">瞄准"高保真"二级 / 三级（依招标要求锁定，<span class="pill">待确认</span>）。</div></div>
+  <div class="box"><div class="t">④ 验收基线</div><div class="d">几何 ≤0.5mm · 仿真 ≤±0.5% · 同步 ≤200ms（行业标尺，非强制）+ 工厂级指标 / 预测精度（测评定）。</div></div>
+</div>
+
+<h3>1.3 待确认项（会上拍板 · 6 项）</h3>
+<table>
+  <tr><th style="width:22%">项</th><th style="width:30%">默认设定</th><th style="width:14%">确认方</th><th>不确认的影响</th></tr>
+  <tr><td>目标场景</td><td>装备 + 车间 + 工厂级双场景</td><td>业务方</td><td>建模与数据范围漂移</td></tr>
+  <tr><td>保真等级</td><td>二级 / 三级</td><td>业务方 + 标准</td><td>指标与预算无法锁定</td></tr>
+  <tr><td>部署形态</td><td>私有化 + 边缘</td><td>业务方 + 安全</td><td>安全架构与选型返工</td></tr>
+  <tr><td>工厂级验收阈值</td><td>误差 ≤X% · 达成 ≥Y%</td><td>业务方 + 仿真</td><td>合同验收条款缺失</td></tr>
+  <tr><td>预算口径</td><td>系统建设 + 测评</td><td>决策人</td><td>立项金额未定</td></tr>
+  <tr><td>POC 范围</td><td>2–3 周 Plant vs AnyLogic</td><td>技术</td><td>仿真引擎选型不确定</td></tr>
+</table>
+
+<h3>1.4 决策点与签署</h3>
+<div class="card"><b>决策点 A：</b>是否通过《P0 需求规格与标准符合性基线》？（通过 → 签署生效）</div>
+<div class="card"><b>决策点 B：</b>是否批准启动 P1（几何内核 + 实时数据底座，2026 Q4 起）？</div>
+<div class="card"><b>决策点 C：</b>预算口径是否纳入立项金额？（授权 P0 末完成详细预算分解）</div>
+<div class="sig">
+  <div class="row"><div class="role">业务方负责人</div>签字：______________　日期：______________</div>
+  <div class="row"><div class="role">技术负责人 / 架构师</div>签字：______________　日期：______________</div>
+  <div class="row"><div class="role">标准 / 测评负责人</div>签字：______________　日期：______________</div>
+  <div class="row"><div class="role">项目决策人</div>签字：______________　日期：______________</div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============ 第二部分 ============ -->
+<h2>第二部分 · PPT 大纲（正式 deck 骨架 · 约 14 页）</h2>
+<p class="lead">若需制作正式汇报幻灯片，按下述章节落地；每页要点已给出，可直接转为 PPT 内容。重点页（P8–P13）对应评审核心决策。</p>
+<ol class="ppt">
+  <li><b>封面</b>：项目名称、P0 立项评审、日期、汇报人。</li>
+  <li><b>目录</b>：背景 / 架构 / 标准 / 场景 / 基线 / 待确认 / 路线 / 签署。</li>
+  <li><b>项目背景与政策牵引</b>：数字孪生列入智能制造标准体系；装备/车间国标 2025 落地；自主可控诉求（几何内核锚点）。</li>
+  <li><b>总体目标</b>：建成覆盖"装备—车间—工厂"的自主可控、高保真、可认证智能数字孪生系统；通过 CESI 测评。</li>
+  <li><b>五元分层架构</b>：① OGG（锁定）② Agent 通用 MAS 接口（解耦）③ 仿真保真层 ④ 实时数据底座 ⑤ 模型验证体系；数据流闭环。</li>
+  <li><b>技术选型</b>：五元构件推荐选型与边界（OGG 锁定 / Agent 厂商无关 / CAE 国产主力 / 工厂级引擎 POC 定 / 数据底座 / 验证自建）。</li>
+  <li><b>标准符合性规划</b>：GB/T 45626 / 45873 / 43441 条款—构件映射矩阵；保真指标承诺机制。</li>
+  <li><b>目标场景</b>：装备级孪生 + 车间级孪生 + 工厂级仿真双场景（新建验证 / 存量优化）。 <span class="pill">核心</span></li>
+  <li><b>量化验收基线</b>：几何≤0.5mm / 仿真≤±0.5% / 同步≤200ms / 工厂级指标待填 / 预测·决策精度（测评）；标注标尺非强制。 <span class="pill">核心</span></li>
+  <li><b>分期建设路线</b>：P0–P3（18 月）、里程碑评审门 M1/M2、关键前提（仿真/同步/验证三块需补）。</li>
+  <li><b>POC 验证安排</b>：2–3 周验证 Plant Simulation vs AnyLogic 贴合双场景；输出选型建议回填基线。</li>
+  <li><b>风险与应对</b>：组件≠合规、工厂级数据粒度、保真指标争议、AI/仿真锁定（通用 MAS 解耦）。</li>
+  <li><b>待确认项与决策</b>：6 项待确认清单 + 3 个决策点（通过基线 / 启动 P1 / 预算）。 <span class="pill">核心</span></li>
+  <li><b>签署与下一步</b>：四角色签署栏；签署后启动 P1（几何内核 + 数据底座）。 <span class="pill">核心</span></li>
+</ol>
+
+<div class="warn"><b>会议主持提示：</b>把 60% 时间放在 P8–P13（场景、基线、待确认、决策、签署）；前 7 页为背景铺垫，可快速过。会前请将《P0 基线》v1.0 提前发给参会方预读，会上聚焦"拍板"而非"讲解"。</div>
+
+<footer>
+本评审材料承接《智能数字孪生系统建设规划方案》v1.5 与《P0 需求规格与标准符合性基线》v1.0。带"待确认/待填"项须在会上由对应确认方拍板；量化阈值为行业常用标尺，非国标强制数值，最终以官方标准与目标测评等级为准。
+</footer>
+
+</div>
+</body>
+</html>

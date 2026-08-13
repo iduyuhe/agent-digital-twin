@@ -1,0 +1,19 @@
+version: "3.8"
+services:
+  geometry-core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
+    command: tail -f /dev/null   # 常驻，供 exec 进入编译/验证
+    # 真实启动命令（构建机）：编译并运行 hello_geometry 验证几何链路
+    # docker compose exec geometry-core bash -c "cd /workspace && mkdir -p build && cd build && cmake .. && make && ./hello_geometry out.step"
+
+  timeseries:
+    image: tdengine/tdengine:latest   # 数据底座时序库占位（P1 选型待定，先占位）
+    ports:
+      - "6041:6041"
+    # 备选：influxdb:2.7 / emqx:5（MQTT broker）
+    # 最终选型取决于 P0 门禁"部署模式"拍板（华为云 IoT / 开源 EMQX+IoTDB / OPC UA 直采）

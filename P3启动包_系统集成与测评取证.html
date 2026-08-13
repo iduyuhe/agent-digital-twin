@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能数字孪生系统 · P3 启动包（系统集成与测评取证）</title>
+<style>
+  :root{
+    --blue:#2563eb; --ink:#0f172a; --gray:#475569; --line:#e2e8f0; --bg:#f8fafc;
+    --soft-blue:#eff6ff; --soft-gray:#f1f5f9; --amber:#f59e0b;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--ink);background:#fff;line-height:1.78;font-size:15px;}
+  .wrap{max-width:1000px;margin:0 auto;padding:48px 36px 90px;}
+  h1{font-size:26px;line-height:1.35;margin:0 0 6px;letter-spacing:-.3px;}
+  .sub{color:var(--gray);font-size:13.5px;margin-bottom:26px;border-bottom:1px solid var(--line);padding-bottom:18px;}
+  h2{font-size:20px;margin:44px 0 14px;padding-left:12px;border-left:4px solid var(--blue);}
+  h3{font-size:16px;margin:24px 0 8px;color:var(--blue);}
+  p{margin:10px 0;}
+  .lead{font-size:15px;color:var(--gray);}
+  .note{background:var(--soft-gray);border-left:4px solid var(--gray);padding:12px 16px;margin:16px 0;font-size:14px;color:var(--gray);}
+  .warn{background:#fffbeb;border-left:4px solid var(--amber);padding:12px 16px;margin:16px 0;font-size:14px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:10px 0;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .card b{color:var(--blue);}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px;}
+  th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top;}
+  th{background:var(--soft-gray);font-weight:700;color:#1e293b;}
+  tr:nth-child(even) td{background:var(--bg);}
+  .tag{display:inline-block;min-width:64px;text-align:center;font-size:12px;font-weight:700;
+    padding:4px 8px;border-radius:999px;flex-shrink:0;}
+  .tag.yes{background:#dcfce7;color:#15803d;}
+  .tag.cond{background:#fef9c3;color:#854d0e;}
+  .tag.no{background:#fee2e2;color:#b91c1c;}
+  .pill{display:inline-block;background:var(--soft-blue);color:var(--blue);font-size:11.5px;font-weight:700;
+    padding:2px 8px;border-radius:999px;margin:2px 4px 2px 0;}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:14px 0;}
+  .steps li{counter-increment:s;position:relative;padding:12px 0 12px 48px;border-bottom:1px dashed var(--line);}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:10px;width:32px;height:32px;
+    background:var(--blue);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0;}
+  .kpi .box{background:var(--soft-blue);border:1px solid #bfdbfe;border-radius:10px;padding:14px;text-align:center;}
+  .kpi .num{font-size:26px;font-weight:800;color:var(--blue);line-height:1.1;}
+  .kpi .cap{font-size:12.5px;color:var(--gray);margin-top:4px;}
+  .track{display:flex;gap:8px;margin:18px 0;align-items:stretch;}
+  .track .stage{flex:1;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;position:relative;}
+  .track .stage.done{background:var(--soft-blue);border-color:#bfdbfe;}
+  .track .stage.cur{background:#fff;border-color:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.15);}
+  .track .stage.fut{background:var(--bg);color:var(--gray);}
+  .track .stage .ph{font-weight:800;font-size:14px;color:var(--blue);}
+  .track .stage.fut .ph{color:var(--gray);}
+  .track .stage .st{font-size:11.5px;color:var(--gray);margin-top:3px;}
+  footer{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:#94a3b8;}
+  .gantt{margin:18px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .gantt .row{display:flex;align-items:center;border-bottom:1px solid var(--line);}
+  .gantt .row:last-child{border-bottom:none;}
+  .gantt .lbl{width:210px;flex-shrink:0;padding:10px 14px;font-size:13px;font-weight:600;background:var(--soft-gray);}
+  .gantt .track2{position:relative;flex:1;height:48px;background:
+    repeating-linear-gradient(90deg,transparent,transparent 59px,#eef2f7 59px,#eef2f7 60px);}
+  .gantt .bar{position:absolute;top:11px;height:26px;border-radius:6px;color:#fff;font-size:11.5px;
+    display:flex;align-items:center;padding:0 8px;white-space:nowrap;font-weight:600;}
+  .b0{background:#94a3b8;} .b1{background:#2563eb;} .b2{background:#0ea5e9;} .b3{background:#7c3aed;} .b4{background:#059669;}
+  .axis{display:flex;margin-left:210px;font-size:11.5px;color:var(--gray);border-top:1px dashed var(--line);}
+  .axis span{flex:1;text-align:center;padding:4px 0;}
+  .src li{font-size:13px;color:var(--gray);margin:6px 0;}
+  .docv{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:10px 0;}
+  .docv b{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>P3 启动包 · 系统集成与测评取证</h1>
+  <div class="sub">智能数字孪生系统建设规划方案 · P3 期执行计划 · v1.0 · 2026-08-13 · 供 M2 评审通过后启动 P3 用</div>
+
+  <div class="note"><b>文档定位：</b>本启动包是《建设规划方案 v1.5》P3 期的细化执行版，也是五元架构（OGG 几何内核 + 实时数据底座 + 仿真保真层 + 解耦 Agent 智能层 + 模型验证体系）的<b>最后一块收口</b>。P0/P1/P2 已分别完成立项基线、几何+数据底座闭环（M1）、仿真+智能闭环（M2）。本包在 M2 通过后，作为"系统集成 + 模型验证体系建设 + CESI 测评取证 + 商业验收结项"的开工依据。沿用"降依赖、先把 Demo 跑起来"的原则：测评前先用零依赖 Demo 链（pythonocc-core 几何 + SimPy 工厂级仿真 + 本地 LLM Agent）完成内部自检，再对接收费测评。</div>
+
+  <h2>一、项目全景与当前阶段</h2>
+  <div class="track">
+    <div class="stage done"><div class="ph">P0</div>立项与标准基线<div class="st">✓ 已完成</div></div>
+    <div class="stage done"><div class="ph">P1</div>几何内核 + 数据底座<div class="st">✓ M1 通过</div></div>
+    <div class="stage done"><div class="ph">P2</div>仿真保真 + 智能层<div class="st">✓ M2 通过</div></div>
+    <div class="stage cur"><div class="ph">P3</div>集成验证 + 测评认证<div class="st">← 本期</div></div>
+  </div>
+  <p class="lead">P1 立骨架（几何 + 同步），P2 挂肉（仿真 + 智能），<b>P3 是总装 + 取证</b>：把五元构件集成为完整系统、建立<b>模型验证体系</b>（标定—虚实对照—虚实验证闭环）、走 <b>CESI 成熟度 / 可信性测评</b>拿等级证书、标杆场景商业验收、项目结项。P3 的核心不再是"加新能力"，而是"<b>把已有能力证明给标准看</b>"。</p>
+
+  <h2>二、P3 目标与量化基线</h2>
+  <div class="kpi">
+    <div class="box"><div class="num">4.5</div><div class="cap">个月周期</div></div>
+    <div class="box"><div class="num">3</div><div class="cap">份国标全条款</div></div>
+    <div class="box"><div class="num">14/17</div><div class="cap">测评指标项</div></div>
+    <div class="box"><div class="num">1</div><div class="cap">等级证书</div></div>
+  </div>
+  <table>
+    <tr><th style="width:26%">目标维度</th><th>本期交付判据</th><th style="width:13%">性质</th></tr>
+    <tr><td>系统集成</td><td>五元构件（几何 + 数据 + 仿真 + Agent + 验证）按接口契约集成，端到端闭环（几何建模→实时同步→仿真推演→智能决策→虚实验证）跑通</td><td><span class="tag yes">硬交付</span></td></tr>
+    <tr><td>模型验证体系</td><td>标定—虚实对照—虚实验证流程<b>文档化 + 工具化</b>，覆盖 GB/T 45626 虚实验证与评估(6.6)、模型验证(6.7)</td><td><span class="tag yes">硬交付</span></td></tr>
+    <tr><td>国标全条款自检</td><td>GB/T 45626 / 45873 / 43441 逐条自检通过，差距清单清零，出具《标准符合性自检报告》</td><td><span class="tag yes">硬交付</span></td></tr>
+    <tr><td>CESI 测评取证</td><td>申报并通过<b>成熟度测试（14 项）</b>或<b>可信性测评（17 项）</b>，获取等级证书（规划方案第 10 章口径）</td><td><span class="tag yes">硬交付</span></td></tr>
+    <tr><td>商业验收</td><td>标杆装备场景 + 工厂级双场景（新建验证 + 存量优化）商业验收签字</td><td><span class="tag yes">硬交付</span></td></tr>
+    <tr><td>结项</td><td>《运维手册》《结项报告》《测评证书》归档，项目正式结项</td><td><span class="tag yes">硬交付</span></td></tr>
+  </table>
+  <div class="warn"><b>标尺与认证的边界：</b>P1/P2 采集的几何误差≤0.5mm、仿真误差≤±0.5%、同步延迟≤200ms 是内部验收标尺；工信部"高保真"的最终符合性以 <b>CESI 测评结论</b>为准。P3 必须把这些标尺指标转化为测评项的可举证证据链（日志、标定记录、虚实对照表）。</div>
+
+  <h2>三、组织与团队配置（缩编）</h2>
+  <p>P2 末峰值约 14–16 人；P3 进入集成与取证期，稀缺仿真/算法岗位需求下降，团队缩编至约 <b>8–10 人</b>，以集成、验证、标准、测评协调为主：</p>
+  <table>
+    <tr><th>角色</th><th>人数</th><th>P3 期核心职责</th><th>入场时点</th></tr>
+    <tr><td>系统集成负责人 / 项目经理</td><td>1</td><td>整体推进、M3 结项门管理、跨构件联调协调</td><td>P3 第 1 周</td></tr>
+    <tr><td>系统架构 / 集成工程师</td><td>1–2</td><td>五元构件接口联调、端到端闭环打通</td><td>P3 第 1 周</td></tr>
+    <tr><td>验证 / 测试工程师</td><td>2</td><td>模型验证体系建设、虚实对照、指标证据采集</td><td>P3 第 1–2 周</td></tr>
+    <tr><td>标准合规工程师</td><td>1</td><td>GB/T 全条款自检、差距清零、自检报告</td><td>P3 第 1 周</td></tr>
+    <tr><td>测评协调（对接 CESI）</td><td>1</td><td>测评申报、送测、问题整改闭环</td><td>P3 第 3 周</td></tr>
+    <tr><td>前端 / 验收演示</td><td>1</td><td>验收看板、闭环 Demo 录屏、汇报材料</td><td>P3 第 2 周</td></tr>
+    <tr><td>运维工程师</td><td>1</td><td>部署、运维手册、现场支撑</td><td>P3 第 4 周</td></tr>
+  </table>
+
+  <h2>四、WBS 任务分解与甘特（约 4.5 个月）</h2>
+  <div class="gantt">
+    <div class="row"><div class="lbl">全系统集成联调</div><div class="track2"><div class="bar b1" style="left:2%;width:54%">M1–M3</div></div></div>
+    <div class="row"><div class="lbl">模型验证体系搭建</div><div class="track2"><div class="bar b4" style="left:14%;width:58%">M2–M4</div></div></div>
+    <div class="row"><div class="lbl">虚实验证闭环</div><div class="track2"><div class="bar b4" style="left:34%;width:38%">M3–M4</div></div></div>
+    <div class="row"><div class="lbl">国标全条款自检</div><div class="track2"><div class="bar b2" style="left:34%;width:38%">M3–M4</div></div></div>
+    <div class="row"><div class="lbl">CESI 测评申报与执行</div><div class="track2"><div class="bar b3" style="left:58%;width:38%">M4–M5</div></div></div>
+    <div class="row"><div class="lbl">标杆商业验收</div><div class="track2"><div class="bar b0" style="left:82%;width:14%">M5</div></div></div>
+    <div class="row"><div class="lbl">M3 结项评审</div><div class="track2"><div class="bar b0" style="left:90%;width:10%">M5</div></div></div>
+    <div class="axis"><span>M1</span><span>M2</span><span>M3</span><span>M4</span><span>M5</span></div>
+  </div>
+
+  <h2>五、构件 F · 模型验证体系（标定—虚实对照—虚实验证）</h2>
+  <p>P3 新增的核心构件。<b>"高保真"不可自证，必须经虚实对照验证</b>——这是工信部标准与 CESI 测评的共同硬要求。</p>
+  <div class="card"><b>① 标定（Calibration）。</b>传感器量纲/零点标定、仿真参数溯源；几何误差（≤0.5mm）、仿真误差（≤±0.5%）的来源与不确定度归档，形成可追溯的标定记录。</div>
+  <div class="card"><b>② 虚实对照（Twin-Physical Comparison）。</b>同一工况下，数字实体预测值 vs 物理实体实测值比对，计算偏差并判定是否在允许区间；输出"虚实对照表"作为可信证据。</div>
+  <div class="card"><b>③ 虚实验证（What-if Validation）。</b>用已验证模型做假设推演（如"增资 1 台机器产能爬坡多少"，对应工厂级仿真场景②），确认推演可信后，再下发控制指令——形成"验证→推演→决策→执行"闭环。</div>
+  <div class="note"><b>标准映射：</b>模型验证体系对应 GB/T 45626-2025 虚实验证与评估(6.6)、模型验证(6.7)；其输出（预测精度 / 操控精度 / 决策一致性）直接供给可信性测评的 17 项指标。P2 已预留的"虚实对照标定接口 + 可信性指标埋点"在此激活。</div>
+
+  <h2>六、五元集成接口契约（汇总 P1/P2）</h2>
+  <table>
+    <tr><th style="width:18%">构件</th><th>对外接口契约</th><th>对接方</th></tr>
+    <tr><td>① OGG 几何内核</td><td>STEP / IGES 几何交换；pythonocc-core 兼容接口</td><td>仿真层（几何驱动）、前端（渲染）</td></tr>
+    <tr><td>④ 实时数据底座</td><td>统一设备 ID + 时序订阅（MQTT / OPC UA）；增量同步</td><td>全部构件（数据供给）</td></tr>
+    <tr><td>③ 仿真保真层</td><td>几何驱动入参 + 仿真结果回传（装备 CAE / 工厂级 SimPy·商业引擎）</td><td>几何层、Agent 层、验证层</td></tr>
+    <tr><td>② 解耦 Agent 层</td><td>通用 MAS 接口 <code>diagnose(sensor)-&gt;dict</code>（厂商无关）</td><td>数据底座、验证层、应用层</td></tr>
+    <tr><td>⑤ 模型验证体系</td><td>虚实对照数据接口（预测值 / 实测值 / 偏差）</td><td>全部构件（可信闭环）</td></tr>
+  </table>
+
+  <h2>七、CESI 测评路径（取证决策）</h2>
+  <table>
+    <tr><th>测评类型</th><th>指标数</th><th>侧重点</th><th>适用场景</th><th>周期</th><th>费用口径</th></tr>
+    <tr><td>成熟度测试</td><td>14 项</td><td>系统成熟度分级（构建域 / 应用域 / 协同域）</td><td>想要"分级认证"背书</td><td>1–2 月</td><td>按系统 / 按项</td></tr>
+    <tr><td>可信性测评</td><td>17 项</td><td>可信维度（预测精度 / 操控精度 / 决策一致性等）</td><td><b>高保真 + 智能决策诉求（本项目贴合）</b></td><td>2–3 月</td><td>按系统 / 按项</td></tr>
+  </table>
+  <div class="card"><b>取证决策：</b>本项目目标为"高保真 + 智能决策闭环"，<b>优先可信性测评（17 项）</b>，并可并行成熟度测试（14 项）做分级背书。测评前须用零依赖 Demo 链完成内部自检（见规划方案附录 A/B/C 与 P1 Demo），避免送测后才发现指标缺口。</div>
+
+  <h2>八、M3 结项评审门</h2>
+  <table>
+    <tr><th style="width:30%">必交付</th><th>判据</th></tr>
+    <tr><td>CESI 测评证书</td><td>通过可信性测评（17 项）或成熟度测试（14 项），获等级证书</td></tr>
+    <tr><td>《标准符合性自检报告》</td><td>GB/T 45626 / 45873 / 43441 逐条自检 + 差距清零</td></tr>
+    <tr><td>标杆场景商业验收单</td><td>装备 + 工厂级双场景甲方签字验收</td></tr>
+    <tr><td>《运维手册》+《结项报告》</td><td>部署、运维、演进路线齐备，决策人签字结项</td></tr>
+  </table>
+  <div class="warn"><span class="pill">门禁</span>测评结论若未达目标等级，须启动"整改—复测"闭环，不强行结项；整改周期计入项目总工期，须在 P3 第 4 周前完成首次送测以预留复测窗口。</div>
+
+  <h2>九、风险与应对</h2>
+  <table>
+    <tr><th>风险</th><th>影响</th><th>应对</th></tr>
+    <tr><td>构件接口不一致</td><td>集成延期</td><td>W1 冻结接口契约（本章第六节），每日联调</td></tr>
+    <tr><td>测评未达目标等级</td><td>无法结项</td><td>提前内部自检 + 预留复测窗口（第 4 周首测）</td></tr>
+    <tr><td>数据合规（等保 / 不出域）</td><td>送测受阻</td><td>私有化 + 边缘部署，脱敏/样例数据送测</td></tr>
+    <tr><td>测评周期延误</td><td>商业验收顺延</td><td>测评协调岗第 3 周入场，并行准备材料</td></tr>
+  </table>
+
+  <h2>十、P3 交付物清单</h2>
+  <div class="docv"><b>交付物：</b>① 五元集成系统（可运行）；② 模型验证体系文档 + 工具；③ 《标准符合性自检报告》；④ CESI 测评证书；⑤ 标杆场景商业验收单；⑥ 《运维手册》《结项报告》。</div>
+
+  <h3>参考来源</h3>
+  <ul class="src">
+    <li>GB/T 43441.1-2023 智能制造 数字孪生 通用要求</li>
+    <li>GB/T 43441.2-2026 数字孪生 数字实体 模型精度要求</li>
+    <li>GB/T 45626-2025 装备数字孪生系统通用要求（含仿真/可视化/状态监控/故障诊断/状态预测/模型验证/虚实验证与评估）</li>
+    <li>GB/T 45873-2025 车间数字孪生 参考架构（含生产系统仿真）</li>
+    <li>中国电子技术标准化研究院（CESI）数字孪生系统成熟度测试 / 可信性测评规范</li>
+    <li>《建设规划方案 v1.5》《P0 需求规格与标准符合性基线》《P1/P2 启动包》《P1 零依赖 Demo 原型》（本工作区同源文档）</li>
+  </ul>
+
+  <footer>
+    智能数字孪生系统建设规划方案 · P3 启动包 v1.0 · 2026-08-13 · 供 M2 评审通过后启动 P3 与里程碑管理参考<br>
+    本文档与前序 P0/P1/P2 文档、零依赖 Demo 共同构成 P0→P3 全期执行包；组件选型与指标以最新基线文档为准。
+  </footer>
+
+</div>
+</body>
+</html>

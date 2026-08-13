@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能数字孪生系统 · P2 启动包（仿真保真与智能层集成）</title>
+<style>
+  :root{
+    --blue:#2563eb; --ink:#0f172a; --gray:#475569; --line:#e2e8f0; --bg:#f8fafc;
+    --soft-blue:#eff6ff; --soft-gray:#f1f5f9; --amber:#f59e0b;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--ink);background:#fff;line-height:1.78;font-size:15px;}
+  .wrap{max-width:1000px;margin:0 auto;padding:48px 36px 90px;}
+  h1{font-size:26px;line-height:1.35;margin:0 0 6px;letter-spacing:-.3px;}
+  .sub{color:var(--gray);font-size:13.5px;margin-bottom:26px;border-bottom:1px solid var(--line);padding-bottom:18px;}
+  h2{font-size:20px;margin:44px 0 14px;padding-left:12px;border-left:4px solid var(--blue);}
+  h3{font-size:16px;margin:24px 0 8px;color:var(--blue);}
+  p{margin:10px 0;}
+  .lead{font-size:15px;color:var(--gray);}
+  .note{background:var(--soft-gray);border-left:4px solid var(--gray);padding:12px 16px;margin:16px 0;font-size:14px;color:var(--gray);}
+  .warn{background:#fffbeb;border-left:4px solid var(--amber);padding:12px 16px;margin:16px 0;font-size:14px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:10px 0;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .card b{color:var(--blue);}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px;}
+  th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top;}
+  th{background:var(--soft-gray);font-weight:700;color:#1e293b;}
+  tr:nth-child(even) td{background:var(--bg);}
+  .tag{display:inline-block;min-width:64px;text-align:center;font-size:12px;font-weight:700;
+    padding:4px 8px;border-radius:999px;flex-shrink:0;}
+  .tag.yes{background:#dcfce7;color:#15803d;}
+  .tag.cond{background:#fef9c3;color:#854d0e;}
+  .tag.no{background:#fee2e2;color:#b91c1c;}
+  .pill{display:inline-block;background:var(--soft-blue);color:var(--blue);font-size:11.5px;font-weight:700;
+    padding:2px 8px;border-radius:999px;margin:2px 4px 2px 0;}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:14px 0;}
+  .steps li{counter-increment:s;position:relative;padding:12px 0 12px 48px;border-bottom:1px dashed var(--line);}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:10px;width:32px;height:32px;
+    background:var(--blue);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0;}
+  .kpi .box{background:var(--soft-blue);border:1px solid #bfdbfe;border-radius:10px;padding:14px;text-align:center;}
+  .kpi .num{font-size:26px;font-weight:800;color:var(--blue);line-height:1.1;}
+  .kpi .cap{font-size:12.5px;color:var(--gray);margin-top:4px;}
+  .track{display:flex;gap:8px;margin:18px 0;align-items:stretch;}
+  .track .stage{flex:1;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;position:relative;}
+  .track .stage.done{background:var(--soft-blue);border-color:#bfdbfe;}
+  .track .stage.cur{background:#fff;border-color:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.15);}
+  .track .stage.fut{background:var(--bg);color:var(--gray);}
+  .track .stage .ph{font-weight:800;font-size:14px;color:var(--blue);}
+  .track .stage.fut .ph{color:var(--gray);}
+  .track .stage .st{font-size:11.5px;color:var(--gray);margin-top:3px;}
+  footer{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:#94a3b8;}
+  .gantt{margin:18px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .gantt .row{display:flex;align-items:center;border-bottom:1px solid var(--line);}
+  .gantt .row:last-child{border-bottom:none;}
+  .gantt .lbl{width:210px;flex-shrink:0;padding:10px 14px;font-size:13px;font-weight:600;background:var(--soft-gray);}
+  .gantt .track2{position:relative;flex:1;height:48px;background:
+    repeating-linear-gradient(90deg,transparent,transparent 59px,#eef2f7 59px,#eef2f7 60px);}
+  .gantt .bar{position:absolute;top:11px;height:26px;border-radius:6px;color:#fff;font-size:11.5px;
+    display:flex;align-items:center;padding:0 8px;white-space:nowrap;font-weight:600;}
+  .b0{background:#94a3b8;} .b1{background:#2563eb;} .b2{background:#0ea5e9;} .b3{background:#7c3aed;} .b4{background:#059669;}
+  .axis{display:flex;margin-left:210px;font-size:11.5px;color:var(--gray);border-top:1px dashed var(--line);}
+  .axis span{flex:1;text-align:center;padding:4px 0;}
+  .src li{font-size:13px;color:var(--gray);margin:6px 0;}
+  .docv{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:10px 0;}
+  .docv b{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>P2 启动包 · 仿真保真与智能层集成</h1>
+  <div class="sub">智能数字孪生系统建设规划方案 · P2 期执行计划 · v1.0 · 2026-08-13 · 供 M1 评审通过后启动 P2 用</div>
+
+  <div class="note"><b>文档定位：</b>本启动包是《建设规划方案 v1.5》P2 期的细化执行版。P1 已交付几何内核（OGG）+ 实时数据底座闭环并通过 M1 评审门。本包在 M1 通过后，即可作为"仿真保真 + 智能保真"双线接入的开工依据。文中标注 <span class="pill">门禁</span> 的条目为 P2 开工前必须先决议的事项。沿用 P0 确立的"降依赖、先把 Demo 跑起来"原则：重型商业组件（CAE 求解器、Plant Simulation/AnyLogic）先用开源/轻量占位打通闭环，再按 POC 结论替换。</div>
+
+  <h2>一、项目全景与当前阶段</h2>
+  <div class="track">
+    <div class="stage done"><div class="ph">P0</div>立项与标准基线<div class="st">✓ 已完成</div></div>
+    <div class="stage done"><div class="ph">P1</div>几何内核 + 数据底座<div class="st">✓ M1 通过</div></div>
+    <div class="stage cur"><div class="ph">P2</div>仿真保真 + 智能层<div class="st">← 本期</div></div>
+    <div class="stage fut"><div class="ph">P3</div>集成验证 + 测评认证<div class="st">待启动</div></div>
+  </div>
+  <p class="lead">P1 立起了"骨架"（几何 + 同步）。P2 是"挂肉"的关键期：把<b>仿真保真</b>（装备级 CAE 物理仿真 + 工厂级离散事件仿真）与<b>智能保真</b>（解耦 Agent 智能层，通用 MAS 接口）两线接入，并产出<strong>"仿真保真 + 智能保真"闭环</strong>与<b>标杆装备虚拟调试 + 工厂级双场景（新建厂验证 + 存量产能优化）闭环</b>，作为 P3（系统集成与测评认证）的输入。</p>
+  <div class="card"><b>本包不解决但需衔接的事项：</b>模型验证体系 / 虚实验证流程（P3）、CESI 成熟度 / 可信性测评（P3）均在后续期次。P2 仅须为它们预留<b>虚实对照标定接口</b>与<b>可信性指标采集埋点</b>（预测精度 / 操控精度 / 决策一致性），部署实现放在 P3。</div>
+
+  <h2>二、P2 目标与量化基线</h2>
+  <div class="kpi">
+    <div class="box"><div class="num">6</div><div class="cap">个月周期</div></div>
+    <div class="box"><div class="num">≤±0.5%</div><div class="cap">仿真误差（标尺）</div></div>
+    <div class="box"><div class="num">2</div><div class="cap">工厂级双场景</div></div>
+    <div class="box"><div class="num">1</div><div class="cap">装备虚拟调试闭环</div></div>
+  </div>
+  <table>
+    <tr><th style="width:28%">目标维度</th><th>本期交付判据</th><th style="width:14%">性质</th></tr>
+    <tr><td>装备级仿真保真</td><td>CAE 求解器接入 OGG 几何驱动；多物理场（应力/温度/振动）仿真与机理对标误差 ≤±0.5%（行业标尺，非国标强制）</td><td><span class="tag yes">硬交付</span></td></tr>
+    <tr><td>工厂级仿真保真</td><td>离散事件仿真引擎接入，完成<b>新建厂虚拟验证</b>与<b>存量产能优化/物流推演</b>双场景；产能/节拍预测误差、排程达成率指标待 P0 阈值拍板后填入（参照 GB/T 45873）</td><td><span class="tag yes">硬交付</span></td></tr>
+    <tr><td>智能保真（解耦 Agent）</td><td>通用 MAS 接口落地；诊断/预测/决策三类智能体接入，预测精度/操控精度达到可信性测评初步基线</td><td><span class="tag yes">硬交付</span></td></tr>
+    <tr><td>孪生互动闭环升级</td><td>标杆装备完成虚拟调试 + 预测性维护原型；工厂级双场景完成仿真推演闭环，可现场/录屏演示</td><td><span class="tag yes">硬交付</span></td></tr>
+    <tr><td>国标初步验证</td><td>对标 GB/T 45626 仿真(6.1)/故障诊断(6.4)/状态预测(6.5)/连接交互(7.4)、GB/T 45873 车间/工厂孪生完成初步自测</td><td><span class="tag cond">软验证</span></td></tr>
+    <tr><td>后续接口预留</td><td>虚实对照标定接口、可信性指标埋点文档齐备</td><td><span class="tag cond">预置</span></td></tr>
+  </table>
+  <div class="warn"><b>标尺说明：</b>±0.5% / 工厂级指标为业界通用参考阈值，用于内部验收与里程碑判定；工信部"高保真"的最终符合性以 CESI 成熟度/可信性测评为准（见规划方案第 10 章），P2 阶段只采集指标、不在本期追求认证。</div>
+
+  <h2>三、组织与团队配置</h2>
+  <p>P1 末已扩编至约 12–13 人。P2 进入仿真 + 智能双线，须补充稀缺的仿真与算法岗位，合计约 14–16 人：</p>
+  <table>
+    <tr><th>角色</th><th>人数</th><th>P2 期核心职责</th><th>入场时点</th></tr>
+    <tr><td>技术负责人 / 项目经理</td><td>1</td><td>整体推进、M2 评审门管理、跨构件协调</td><td>P2 第 1 周</td></tr>
+    <tr><td>系统架构师（含 MAS 架构）</td><td>1</td><td>仿真/智能层与 P1 接口契约对接；通用 MAS 框架选型</td><td>P2 第 1 周</td></tr>
+    <tr><td>仿真工程师（装备 CAE）</td><td>2–3</td><td>CAE 求解器对接、多物理场建模、仿真误差标定</td><td>P2 第 1–2 周</td></tr>
+    <tr><td>仿真工程师（工厂级离散事件）</td><td>1–2</td><td>Plant Simulation / AnyLogic 建模、双场景仿真</td><td>P2 第 2–3 周</td></tr>
+    <tr><td>Agent / 算法工程师</td><td>2–3</td><td>解耦 Agent 智能体开发、通用 MAS 编排、本地 LLM 接入</td><td>P2 第 1 周</td></tr>
+    <tr><td>OGG / CAD 几何工程师</td><td>1–2</td><td>几何模型驱动仿真、pythonocc-core 集成、几何误差复核</td><td>P2 第 1 周</td></tr>
+    <tr><td>数据底座 / 边缘工程师</td><td>1–2</td><td>仿真/智能层数据供给、实时数据流接口维护</td><td>P2 第 1 周</td></tr>
+    <tr><td>前端 / 可视化工程师</td><td>1</td><td>仿真结果呈现、智能决策看板、闭环 Demo 界面</td><td>P2 第 3 周</td></tr>
+    <tr><td>测试 / 验证工程师</td><td>1–2</td><td>仿真误差测量、智能体指标评测、联调</td><td>P2 第 4 周</td></tr>
+  </table>
+  <p class="note">人才缺口预警：离散事件仿真工程师（Plant Simulation/AnyLogic）与 CAE 多物理场工程师为稀缺岗位，建议在 M1→M2 过渡期即启动招聘或锁定第三方仿真咨询服务。国产 LLM + 开源 Agent 框架人才相对充裕。</p>
+
+  <h2>四、WBS 任务分解与甘特（6 个月）</h2>
+  <div class="gantt">
+    <div class="row"><div class="lbl">环境与选型锁定</div><div class="track2"><div class="bar b1" style="left:2%;width:26%">M1–M2</div></div></div>
+    <div class="row"><div class="lbl">装备级 CAE 仿真接入</div><div class="track2"><div class="bar b1" style="left:14%;width:46%">M2–M5</div></div></div>
+    <div class="row"><div class="lbl">工厂级仿真引擎接入</div><div class="track2"><div class="bar b4" style="left:20%;width:44%">M3–M5</div></div></div>
+    <div class="row"><div class="lbl">解耦 Agent 智能层接入</div><div class="track2"><div class="bar b3" style="left:14%;width:50%">M2–M6</div></div></div>
+    <div class="row"><div class="lbl">集成验证 + 双场景闭环</div><div class="track2"><div class="bar b2" style="left:62%;width:28%">M5–M6</div></div></div>
+    <div class="row"><div class="lbl">M2 评审准备</div><div class="track2"><div class="bar b0" style="left:82%;width:16%">M6</div></div></div>
+    <div class="axis"><span>M1</span><span>M2</span><span>M3</span><span>M4</span><span>M5</span><span>M6</span></div>
+  </div>
+  <table>
+    <tr><th style="width:8%">阶段</th><th style="width:22%">关键任务</th><th style="width:32%">主要产出</th><th style="width:16%">负责角色</th><th style="width:22%">里程碑</th></tr>
+    <tr><td>1</td><td>仿真/智能选型 POC 终锁；CAE 与 OGG 几何驱动打通验证</td><td>选型决策纪要、几何驱动接口</td><td>架构 + 仿真/几何</td><td>选型锁死</td></tr>
+    <tr><td>2</td><td>CAE 首算例跑通（装备应力/温度）；Agent 框架落地</td><td>首个仿真算例、MAS 骨架</td><td>CAE 2 + Agent 2</td><td>双线首发</td></tr>
+    <tr><td>3</td><td>工厂级仿真引擎建模（双场景）；智能体诊断/预测接入仿真数据</td><td>双场景模型、诊断/预测原型</td><td>工厂仿真 2 + Agent 2</td><td>工厂模型就绪</td></tr>
+    <tr><td>4</td><td>仿真误差标定（≤±0.5%）；智能体指标评测（预测/操控精度）</td><td>误差/精度测量报告</td><td>测试 2 + 仿真/Agent</td><td>指标达标</td></tr>
+    <tr><td>5</td><td>集成联调；装备虚拟调试闭环 + 工厂级双场景推演闭环</td><td>双闭环 Demo、决策看板</td><td>全员</td><td>闭环可演示</td></tr>
+    <tr><td>6</td><td>M2 评审材料、Demo 打磨、P3 预研（验证体系/测评）启动</td><td>评审包、预研输入</td><td>全员 + 测试</td><td>M2 门通过</td></tr>
+  </table>
+
+  <h2>五、构件 C：装备级 CAE 仿真保真</h2>
+  <h3>5.1 选型对照</h3>
+  <table>
+    <tr><th style="width:24%">候选路线</th><th style="width:30%">组成</th><th style="width:18%">适配度</th><th style="width:28%">取舍</th></tr>
+    <tr><td>国产 CAE 主线<br><span class="tag yes">自主可控</span></td><td>Simdroid（云道）/ 中望 CAE / PERA SIM（安世亚太）</td><td><span class="tag yes">高</span></td><td>国产替代成熟、可为主力；几何可直接驱动 OGG；授权成本可控</td></tr>
+    <tr><td>开源求解器<br><span class="tag yes">零授权</span></td><td>CalculiX / Code_Aster（结构）/ OpenFOAM（流体）</td><td><span class="tag yes">高</span></td><td>免授权、可深度定制；前处理/耦合需自研，工程量较大</td></tr>
+    <tr><td>商业标杆<br><span class="tag cond">对标用</span></td><td>ANSYS / Abaqus</td><td><span class="tag cond">视情况</span></td><td>仅极端工况对标验证用，不主张主用（授权重、自主可控弱）</td></tr>
+  </table>
+  <h3>5.2 OGG 几何驱动与误差标定</h3>
+  <ul class="steps">
+    <li><b>几何驱动：</b>OGG 几何模型（P1 已建）作为 CAE 前处理输入。优先用 <b>pythonocc-core</b>（真 OCCT、预编译 wheel、<b>免编译 C++</b>，已在 P1 Demo 中验证可用）衔接几何与求解器，降低构建门槛；正式交付再切到编译版 OGG。</li>
+    <li><b>多物理场建模：</b>应力 / 温度 / 振动三类工况建模，与机理方程或实测对标，建立仿真误差基线。</li>
+    <li><b>误差标定：</b>关键输出量（位移 / 温度场 / 模态）与解析解或实测比对，达标 ≤±0.5%（标尺）；建立"几何误差→仿真误差"传导评估，证明几何保真是仿真保真的前提。</li>
+  </ul>
+  <div class="note">为何先 pythonocc-core：与 P1 Demo 一致，遵循"降依赖、先跑通"原则。重型编译版 OGG 仅在 P1 W6 已验证，此处直接复用其几何产物，无需重复重型构建。</div>
+
+  <h2>六、构件 D：工厂级仿真引擎接入（离散事件 / 生产系统）</h2>
+  <h3>6.1 选型对照（沿用规划方案附录 B/C 结论）</h3>
+  <table>
+    <tr><th style="width:24%">候选路线</th><th style="width:26%">组成</th><th style="width:18%">适配度</th><th style="width:32%">取舍</th></tr>
+    <tr><td>商业标杆<br><span class="tag cond">POC 定</span></td><td>Plant Simulation / AnyLogic / FlexSim</td><td><span class="tag cond">视 POC</span></td><td>按规划方案附录 C 的 7 维加权 POC 结论选型；桌面离线运行，<b>无需云</b>、无需 GPU；授权成本较高</td></tr>
+    <tr><td>开源轻量<br><span class="tag yes">零依赖</span></td><td>SimPy（Python 离散事件）</td><td><span class="tag yes">原型首选</span></td><td><b>纯 Python、零依赖、免授权</b>，可在普通笔记本跑通工厂级仿真原型；作为"降依赖 Demo 优先"路径与商业引擎退路</td></tr>
+    <tr><td>国产 MES 模块<br><span class="tag cond">评估</span></td><td>MES 自带仿真模块</td><td><span class="tag cond">评估</span></td><td>贴合现有 MES/APS；能力深度有限，作补充而非主力</td></tr>
+  </table>
+  <div class="warn"><b>降依赖原则延续：</b>P2 的工厂级仿真也走"Demo 优先"——先用 <b>SimPy</b> 在零依赖环境跑通双场景逻辑（布局/物流/产能/排程），再按 POC 结论采购商业引擎做精度与可视化升级。骨架（数据接口、指标口径）完全一致，换零件不换骨架。</div>
+  <h3>6.2 双场景建模清单</h3>
+  <table>
+    <tr><th style="width:24%">场景</th><th style="width:38%">建模要素（数据来自附录 A）</th><th style="width:38%">交付闭环</th></tr>
+    <tr><td>① 新建厂虚拟验证</td><td>布局/BOM/节拍（设计文档）；产线平衡、物流路径、产能可达性</td><td>投产前发现瓶颈，输出布局/节拍优化建议</td></tr>
+    <tr><td>② 存量产能优化</td><td>MES/ERP/SCADA 接口与历史产能；瓶颈工段、排程、在制品</td><td>产能爬坡推演、瓶颈诊断、供应链协同建议</td></tr>
+  </table>
+
+  <h2>七、构件 E：解耦 Agent 智能层接入（通用 MAS）</h2>
+  <h3>7.1 通用 MAS 接口与框架</h3>
+  <ul class="steps">
+    <li><b>接口契约：</b>复用 P1 预留的<b>通用 MAS（多智能体系统）接口</b>，不绑定厂商。智能层以"诊断 Agent / 预测 Agent / 决策 Agent"三类角色接入，对外暴露统一契约（输入：仿真+实时数据；输出：诊断结论/预测值/决策建议）。</li>
+    <li><b>框架选型：</b>国产 LLM（智谱 GLM / 通义 / DeepSeek）+ 开源 Agent 框架（LangGraph / AutoGen / CrewAI）。<b>本地 LLM 路径已验证</b>：P1 Demo 的 <code>demo_agent_local_llm.py</code> 已用 Ollama + DeepSeek/GLM 量化版跑通本地诊断原型，数据不出域、免云、免大模型 API。</li>
+    <li><b>规则兜底：</b>大模型未就绪或离线时，自动退回规则引擎（阈值告警/趋势外推），保证闭环不断链（已在 Demo 中实现优雅降级）。</li>
+  </ul>
+  <h3>7.2 智能体能力映射到国标</h3>
+  <table>
+    <tr><th style="width:30%">GB/T 45626 条款</th><th style="width:30%">智能体承载</th><th style="width:40%">P2 交付判据</th></tr>
+    <tr><td>故障诊断 6.4</td><td>诊断 Agent（异常检测 + 根因分析）</td><td>诊断准确率/召回达到可信性测评初步基线</td></tr>
+    <tr><td>状态预测 6.5</td><td>预测 Agent（预测性维护 / 趋势预报）</td><td>预测精度（如 R²、MAPE）达到可信性测评初步基线</td></tr>
+    <tr><td>连接交互 7.4</td><td>决策 Agent（反馈控制 / 优化建议）</td><td>操控精度 / 决策一致性埋点采集</td></tr>
+  </table>
+
+  <h2>八、集成验证与双场景闭环</h2>
+  <p>P2 结束前须完成两类闭环，作为 M2 评审与 P3 输入：</p>
+  <ul class="steps">
+    <li><b>装备虚拟调试 + 预测性维护闭环：</b>OGG 几何模型 → CAE 仿真 → 实时数据驱动 → 诊断/预测 Agent 给出维护建议 → 反馈控制。在标杆装备完成虚拟调试与预测性维护原型演示。</li>
+    <li><b>工厂级双场景仿真推演闭环：</b>① 新建厂虚拟验证（布局/产能可达性）；② 存量产能优化（瓶颈诊断/爬坡推演）。两类场景均输出可量化优化建议，录屏/现场演示。</li>
+    <li><b>可信性指标埋点：</b>在闭环中采集预测精度、操控精度、决策一致性，为 P3 可信性测评预存数据。</li>
+  </ul>
+
+  <h2>九、第一个月冲刺计划（30 天）</h2>
+  <table>
+    <tr><th style="width:14%">周次</th><th style="width:30%">重点</th><th style="width:56%">交付</th></tr>
+    <tr><td>W1</td><td>仿真/智能选型 POC 终锁</td><td>CAE 与工厂级仿真引擎选型纪要；团队到岗；pythonocc-core 接入 OGG 几何</td></tr>
+    <tr><td>W2</td><td>CAE 首算例 + Agent 骨架</td><td>装备首仿真算例（应力/温度）跑通；通用 MAS 框架落地、三类 Agent 占位</td></tr>
+    <tr><td>W3</td><td>工厂级仿真建模启动</td><td>SimPy 零依赖双场景原型（或商业引擎 POC 模型）启动；智能体接入仿真数据</td></tr>
+    <tr><td>W4</td><td>阶段小结</td><td>双周评审；选型/架构定稿；输出 P2 月度进展报告</td></tr>
+  </table>
+
+  <h2>十、M2 评审门标准</h2>
+  <p>P2 结束须通过里程碑评审门 M2，方可进入 P3。评审材料与判据如下：</p>
+  <table>
+    <tr><th style="width:38%">交付物</th><th style="width:34%">验收判据</th><th style="width:28%">判定</th></tr>
+    <tr><td>装备级 CAE 仿真链路 + 误差报告</td><td>多物理场仿真可用；误差 ≤±0.5%（标尺）</td><td><span class="tag yes">必须</span></td></tr>
+    <tr><td>工厂级仿真引擎 + 双场景模型</td><td>新建验证 + 存量优化双场景均可推演</td><td><span class="tag yes">必须</span></td></tr>
+    <tr><td>解耦 Agent 智能层（通用 MAS）</td><td>诊断/预测/决策三类 Agent 接入；指标埋点就绪</td><td><span class="tag yes">必须</span></td></tr>
+    <tr><td>装备虚拟调试 + 工厂级双场景闭环 Demo</td><td>≥1 装备 + 2 工厂级场景可演示闭环</td><td><span class="tag yes">必须</span></td></tr>
+    <tr><td>仿真/智能误差与精度测量报告</td><td>±0.5% / 预测精度 / 操控精度达标（标尺）</td><td><span class="tag yes">必须</span></td></tr>
+    <tr><td>虚实对照标定接口 / 可信性埋点文档</td><td>接口契约 v0.1 评审通过</td><td><span class="tag cond">需要</span></td></tr>
+    <tr><td>P3 预研输入（验证体系/测评）</td><td>测评计划 + 验证体系设计输入</td><td><span class="tag cond">需要</span></td></tr>
+  </table>
+
+  <h2>十一、技术风险与缓解</h2>
+  <table>
+    <tr><th style="width:26%">风险</th><th style="width:38%">影响</th><th style="width:36%">缓解</th></tr>
+    <tr><td>CAE 几何驱动耦合难</td><td>仿真前处理断链</td><td>先用 pythonocc-core 衔接；定义标准几何交换格式；P1 几何误差已达标</td></tr>
+    <tr><td>工厂级仿真数据粒度不足</td><td>存量场景精度低</td><td>P1 已规划 MES/ERP/SCADA 接口；先用设计文档跑新建场景，存量场景逐步补数据</td></tr>
+    <tr><td>智能体指标不达标</td><td>达不到可信性基线</td><td>规则引擎兜底；本地 LLM 持续微调；埋点早采集早优化</td></tr>
+    <tr><td>商业引擎授权延迟</td><td>工厂级精度升级受阻</td><td>SimPy 零依赖原型并行；先用开源跑通逻辑，授权到位再升级</td></tr>
+    <tr><td>仿真/智能层与 P1 接口错位</td><td>集成返工</td><td>P1 已预留几何/数据流/MAS 三类接口契约；M2 前强制契约评审</td></tr>
+  </table>
+
+  <h2>十二、P0/P1 待确认项 → P2 门禁映射</h2>
+  <p>规划方案基线文档列出 6 项 P0 待确认项。进入 P2 时已部分消解，仍须关注：</p>
+  <table>
+    <tr><th style="width:24%">待确认项</th><th style="width:16%">对 P2 影响</th><th style="width:60%">处理建议</th></tr>
+    <tr><td>工厂级验收阈值</td><td><span class="tag no">阻塞</span></td><td><span class="pill">门禁</span>产能/物流节拍预测误差、排程达成率须在 P2 W1 前拍板，否则工厂级指标无法判定达标</td></tr>
+    <tr><td>场景边界（采集范围）</td><td><span class="tag cond">弱相关</span></td><td>P1 已定采集原型设备/产线；P2 沿用并扩展到仿真对象</td></tr>
+    <tr><td>预算（仿真/智能授权）</td><td><span class="tag cond">弱相关</span></td><td>商业 CAE / 工厂级引擎授权在 POC 后定；零依赖路径（pythonocc/SimPy/Ollama）已规避硬开销</td></tr>
+    <tr><td>部署模式（云/私有化）</td><td><span class="tag cond">不阻塞</span></td><td>P0→P1 已确认无云可推进；P2 仿真/智能均为本地/边缘，无需云</td></tr>
+    <tr><td>保真等级（二级/三级）</td><td><span class="tag cond">弱相关</span></td><td>P3 测评时定；P2 按标尺执行并行</td></tr>
+    <tr><td>POC 范围（仿真引擎）</td><td><span class="tag cond">已收敛</span></td><td>规划方案附录 C 已给出 Plant vs AnyLogic 7 维加权 POC 框架，P2 W1 落地</td></tr>
+  </table>
+
+  <h2>十三、协作与开发规范</h2>
+  <ul class="steps">
+    <li><b>接口契约优先：</b>延续 P1 三类标准化接口（OGG 几何模型接口 / 实时数据流接口 / 通用 MAS 接口）。P2 新增<b>虚实对照标定接口</b>与<b>可信性指标埋点</b>，为 P3 预留。</li>
+    <li><b>降依赖、Demo 优先：</b>重型组件（编译版 OGG、商业 CAE、Plant Simulation/AnyLogic）先用 pythonocc-core / 开源求解器 / SimPy / Ollama 本地 LLM 占位打通，再按 POC 替换。换零件不换骨架。</li>
+    <li><b>评审节奏：</b>每周站会 + 双周技术评审 + 月度进展报告；M2 为正式阶段评审门。</li>
+    <li><b>数据与合规：</b>全程脱敏/样例数据；车间实时数据满足等保与数据不出域；本地 LLM 路径天然契合该要求。</li>
+  </ul>
+
+  <h2>十四、下一步（触发 P3 条件）</h2>
+  <div class="card"><b>M2 评审门通过后，即触发 P3：</b>全系统集成 + 建立模型验证体系（标定—虚实对照—虚实验证）+ 自检 GB/T 45626 / 45873 / 43441 全条款 + 申报 CESI 成熟度测试或可信性测评（14/17 项指标）+ 获取等级证书。P2 预留的虚实对照标定接口与可信性指标埋点将在此刻复用，直接支撑测评取证。</div>
+  <p class="note">闭环原则回顾：P1 立骨架（几何+同步），P2 挂肉（仿真+智能），P3 做验证与认证。至此五元架构（OGG 几何 + 解耦 Agent + CAE + 数据底座 + 模型验证）全部就位，工信部"高保真"从概念转为可取证系统。</p>
+
+  <h3>参考来源</h3>
+  <ul class="src">
+    <li>《智能数字孪生系统建设规划方案 v1.5》（D:\agent_digtaltwin\智能数字孪生系统建设规划方案.html）含附录 A 数据需求表 / 附录 B 选型短名单 / 附录 C POC 验证大纲</li>
+    <li>《P0 需求规格与标准符合性基线 v1.0》（D:\agent_digtaltwin\P0需求规格与标准符合性基线.html）</li>
+    <li>《P1 启动包 · 几何内核与实时数据底座打通 v1.0》（D:\agent_digtaltwin\P1启动包_几何内核与数据底座打通.html）</li>
+    <li>《P1 Demo 零依赖原型》（D:\agent_digtaltwin\P1_Demo零依赖原型\：含 demo_geometry_occ.py 真 OCCT 几何、demo_agent_local_llm.py 本地 LLM 智能层、从Demo到正式_替换清单.html）</li>
+    <li>GB/T 43441.1-2023《智能制造 数字孪生 通用要求》；GB/T 45626-2025《装备数字孪生系统通用要求》；GB/T 45873-2025《车间数字孪生参考架构》</li>
+  </ul>
+
+  <footer>智能数字孪生系统 · P2 启动包 · 仿真保真与智能层集成 · 仅供内部立项与执行参考</footer>
+
+</div>
+</body>
+</html>

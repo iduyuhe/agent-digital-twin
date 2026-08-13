@@ -1,0 +1,80 @@
+# 无云本地运行栈 —— 数字孪生 P1 最小闭环（不需任何公有云）
+# 运行形态：你的开发机 / 工厂内网边缘服务器 / Linux 虚拟机（非云托管）
+# 前置：本机安装 Docker Desktop（Windows 走 WSL2 后端）或 Linux 原生 Docker
+#
+# 用法：
+#   docker compose up -d        # 拉起 EMQX + IoTDB（+可选 Ollama）
+#   docker compose ps           # 确认 3 个服务 healthy
+#   docker exec -it ogg-geometry-core bash /opt/build_ogg.sh   # 进容器编译 OGG
+#   ./verify_local.sh           # 验证数据底座（MQTT→IoTDB）本地连通
+#   # 启用本地 LLM：取消下方 ollama 段注释后重新 up
+
+services:
+  # —— ① OGG 几何内核编译/运行容器（本地，零云依赖）——
+  geometry-core:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    image: ogg-geometry-core:local
+    container_name: ogg-geometry-core
+    volumes:
+      - ../ogg_src:/opt/ogg_src:ro        # 已 clone 的 OGG 源码（只读挂载）
+      - ogg-build:/opt/ogg_build          # 编译产物持久化到命名卷
+    working_dir: /opt/ogg_build
+    command: sleep infinity               # 编译需手动进容器执行 build_ogg.sh
+    networks: [twin-net]
+
+  # —— ④ 实时数据底座：MQTT 代理（边缘采集入口，无云）——
+  emqx:
+    image: emqx:5.7
+    container_name: twin-emqx
+    ports:
+      - "1883:1883"      # MQTT 协议端口（设备/网关上报）
+      - "18083:18083"    # 管理控制台
+    environment:
+      EMQX_DASHBOARD__LISTENERS__HTTP__BIND: "18083"
+    healthcheck:
+      test: ["CMD", "emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [twin-net]
+
+  # —— ④ 实时数据底座：时序库（同步数据落点，无云）——
+  iotdb:
+    image: apache/iotdb:1.3.2
+    container_name: twin-iotdb
+    ports:
+      - "6667:6667"      # 原生 IoTDB 协议
+      - "31999:31999"    # REST 服务（验证用）
+    environment:
+      IOTDB_HEAP: "-Xms2g -Xmx2g"
+    volumes:
+      - iotdb-data:/iotdb/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:31999/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [twin-net]
+
+  # —— ② 本地 LLM 智能层（无云，可选）——
+  # 需本机有 GPU；纯 CPU 可跑量化版 DeepSeek/GLM 但较慢。
+  # 启用以前请先在本机装好 ollama 镜像支持或确认驱动可用。
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: twin-ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama-data:/root/.ollama
+  #   networks: [twin-net]
+
+volumes:
+  ogg-build:
+  iotdb-data:
+  ollama-data:
+
+networks:
+  twin-net:
+    driver: bridge

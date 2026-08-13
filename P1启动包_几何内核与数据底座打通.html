@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能数字孪生系统 · P1 启动包（几何内核与实时数据底座打通）</title>
+<style>
+  :root{
+    --blue:#2563eb; --ink:#0f172a; --gray:#475569; --line:#e2e8f0; --bg:#f8fafc;
+    --soft-blue:#eff6ff; --soft-gray:#f1f5f9; --amber:#f59e0b;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--ink);background:#fff;line-height:1.78;font-size:15px;}
+  .wrap{max-width:1000px;margin:0 auto;padding:48px 36px 90px;}
+  h1{font-size:26px;line-height:1.35;margin:0 0 6px;letter-spacing:-.3px;}
+  .sub{color:var(--gray);font-size:13.5px;margin-bottom:26px;border-bottom:1px solid var(--line);padding-bottom:18px;}
+  h2{font-size:20px;margin:44px 0 14px;padding-left:12px;border-left:4px solid var(--blue);}
+  h3{font-size:16px;margin:24px 0 8px;color:var(--blue);}
+  p{margin:10px 0;}
+  .lead{font-size:15px;color:var(--gray);}
+  .note{background:var(--soft-gray);border-left:4px solid var(--gray);padding:12px 16px;margin:16px 0;font-size:14px;color:var(--gray);}
+  .warn{background:#fffbeb;border-left:4px solid var(--amber);padding:12px 16px;margin:16px 0;font-size:14px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:10px 0;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .card b{color:var(--blue);}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px;}
+  th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top;}
+  th{background:var(--soft-gray);font-weight:700;color:#1e293b;}
+  tr:nth-child(even) td{background:var(--bg);}
+  .tag{display:inline-block;min-width:64px;text-align:center;font-size:12px;font-weight:700;
+    padding:4px 8px;border-radius:999px;flex-shrink:0;}
+  .tag.yes{background:#dcfce7;color:#15803d;}
+  .tag.cond{background:#fef9c3;color:#854d0e;}
+  .tag.no{background:#fee2e2;color:#b91c1c;}
+  .pill{display:inline-block;background:var(--soft-blue);color:var(--blue);font-size:11.5px;font-weight:700;
+    padding:2px 8px;border-radius:999px;margin:2px 4px 2px 0;}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:14px 0;}
+  .steps li{counter-increment:s;position:relative;padding:12px 0 12px 48px;border-bottom:1px dashed var(--line);}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:10px;width:32px;height:32px;
+    background:var(--blue);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0;}
+  .kpi .box{background:var(--soft-blue);border:1px solid #bfdbfe;border-radius:10px;padding:14px;text-align:center;}
+  .kpi .num{font-size:26px;font-weight:800;color:var(--blue);line-height:1.1;}
+  .kpi .cap{font-size:12.5px;color:var(--gray);margin-top:4px;}
+  .track{display:flex;gap:8px;margin:18px 0;align-items:stretch;}
+  .track .stage{flex:1;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;position:relative;}
+  .track .stage.done{background:var(--soft-blue);border-color:#bfdbfe;}
+  .track .stage.cur{background:#fff;border-color:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.15);}
+  .track .stage.fut{background:var(--bg);color:var(--gray);}
+  .track .stage .ph{font-weight:800;font-size:14px;color:var(--blue);}
+  .track .stage.fut .ph{color:var(--gray);}
+  .track .stage .st{font-size:11.5px;color:var(--gray);margin-top:3px;}
+  footer{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:#94a3b8;}
+  .gantt{margin:18px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .gantt .row{display:flex;align-items:center;border-bottom:1px solid var(--line);}
+  .gantt .row:last-child{border-bottom:none;}
+  .gantt .lbl{width:210px;flex-shrink:0;padding:10px 14px;font-size:13px;font-weight:600;background:var(--soft-gray);}
+  .gantt .track2{position:relative;flex:1;height:48px;background:
+    repeating-linear-gradient(90deg,transparent,transparent 59px,#eef2f7 59px,#eef2f7 60px);}
+  .gantt .bar{position:absolute;top:11px;height:26px;border-radius:6px;color:#fff;font-size:11.5px;
+    display:flex;align-items:center;padding:0 8px;white-space:nowrap;font-weight:600;}
+  .b0{background:#94a3b8;} .b1{background:#2563eb;} .b2{background:#0ea5e9;} .b3{background:#7c3aed;}
+  .axis{display:flex;margin-left:210px;font-size:11.5px;color:var(--gray);border-top:1px dashed var(--line);}
+  .axis span{flex:1;text-align:center;padding:4px 0;}
+  .src li{font-size:13px;color:var(--gray);margin:6px 0;}
+  .docv{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:10px 0;}
+  .docv b{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>P1 启动包 · 几何内核与实时数据底座打通</h1>
+  <div class="sub">智能数字孪生系统建设规划方案 · P1 期执行计划 · v1.0 · 2026-08-07 · 供 P0 评审通过后启动 P1 用</div>
+
+  <div class="note"><b>文档定位：</b>本启动包是《建设规划方案 v1.5》P1 期的细化执行版。规划方案已于 P0 阶段完成立项评审材料（规划方案 / 基线文档 / 评审 PPTX）。本包在 P0 评审通过、6 项待确认项中 P1 前置项拍板后，即可作为开工依据。文中标注 <span class="pill">门禁</span> 的条目为 P1 开工前必须先决议的事项。</div>
+
+  <h2>一、项目全景与当前阶段</h2>
+  <div class="track">
+    <div class="stage done"><div class="ph">P0</div>立项与标准基线<div class="st">✓ 已完成</div></div>
+    <div class="stage cur"><div class="ph">P1</div>几何内核 + 数据底座<div class="st">← 本期</div></div>
+    <div class="stage fut"><div class="ph">P2</div>仿真保真 + 智能层<div class="st">待启动</div></div>
+    <div class="stage fut"><div class="ph">P3</div>集成验证 + 测评认证<div class="st">待启动</div></div>
+  </div>
+  <p class="lead">P1 是"从纸面到孪生"的第一道工程关口：把规划方案里的两个<b>已确定构件</b>——华为 OGG 几何内核（锁定）与实时数据底座（待定选型）——真正部署、打通，并产出<strong>"几何保真 + 同步保真"最小闭环 Demo</strong>，作为 P2（仿真 + 智能层）接入的底座。</p>
+  <div class="card"><b>本包不解决但需衔接的事项：</b>CAE 仿真（P2）、解耦 Agent 智能层（P2）、模型验证体系（P3）均在后续期次。P1 仅须为它们预留<b>标准化接口契约</b>（几何模型接口、实时数据流接口、通用 MAS 接口占位），不做实现。</div>
+
+  <h2>二、P1 目标与量化基线</h2>
+  <div class="kpi">
+    <div class="box"><div class="num">6</div><div class="cap">个月周期</div></div>
+    <div class="box"><div class="num">≤0.5mm</div><div class="cap">几何误差（标尺）</div></div>
+    <div class="box"><div class="num">≤200ms</div><div class="cap">同步延迟（标尺）</div></div>
+    <div class="box"><div class="num">1</div><div class="cap">标杆闭环 Demo</div></div>
+  </div>
+  <table>
+    <tr><th style="width:30%">目标维度</th><th>本期交付判据</th><th style="width:14%">性质</th></tr>
+    <tr><td>几何建模链路</td><td>OGG 部署可用；支持 STEP/IGES/STL 导入导出；与原始 CAD 比对几何误差 ≤0.5mm（行业标尺，非国标强制）</td><td><span class="tag yes">硬交付</span></td></tr>
+    <tr><td>实时数据底座</td><td>边缘采集 + 流处理链路贯通；物理实体状态 → 孪生体同步延迟 ≤200ms（标尺）</td><td><span class="tag yes">硬交付</span></td></tr>
+    <tr><td>孪生互动闭环</td><td>至少 1 个代表性设备/产线段完成"数据采集 → 几何模型更新 → 可视呈现 → 反馈"最小闭环，可现场/录屏演示</td><td><span class="tag yes">硬交付</span></td></tr>
+    <tr><td>国标初步验证</td><td>对标 GB/T 43441.1 同步要求、GB/T 45626 几何/可视化要求完成初步自测</td><td><span class="tag cond">软验证</span></td></tr>
+    <tr><td>后续接口预留</td><td>CAE 几何驱动接口、实时数据流接口、通用 MAS 接口占位文档齐备</td><td><span class="tag cond">预置</span></td></tr>
+  </table>
+  <div class="warn"><b>标尺说明：</b>0.5mm / 200ms 为业界通用参考阈值，用于内部验收与里程碑判定；工信部"高保真"的最终符合性以 CESI 成熟度/可信性测评为准（见规划方案第 10 章），不在 P1 阶段追求认证。</div>
+
+  <h2>三、组织与团队配置</h2>
+  <p>P0 阶段为轻量启动（3–4 人）。P1 进入实质开发，需扩编至满编。下表为 P1 期团队结构（合计约 12–13 人）：</p>
+  <table>
+    <tr><th>角色</th><th>人数</th><th>P1 期核心职责</th><th>入场时点</th></tr>
+    <tr><td>技术负责人 / 项目经理</td><td>1</td><td>整体推进、评审门管理、跨构件协调</td><td>P1 第 1 周</td></tr>
+    <tr><td>系统架构师</td><td>1</td><td>五元构件接口契约、数据流与部署架构</td><td>P1 第 1 周</td></tr>
+    <tr><td>OGG / CAD 几何工程师</td><td>2</td><td>OGG 部署、OCCT 兼容验证、CAD 数据交换、几何误差标定</td><td>P1 第 1–2 周</td></tr>
+    <tr><td>数据底座 / 边缘工程师</td><td>2</td><td>边缘采集网关、流处理、时序库、同步机制</td><td>P1 第 1–2 周</td></tr>
+    <tr><td>前端 / 可视化工程师</td><td>1</td><td>孪生体 3D 呈现、监控看板、Demo 界面</td><td>P1 第 3 周</td></tr>
+    <tr><td>测试 / 验证工程师</td><td>1</td><td>几何误差测量、同步延迟压测、联调</td><td>P1 第 4 周</td></tr>
+    <tr><td>仿真工程师（预研）</td><td>0.5–1</td><td>P1 末介入 P2 预研、对接 OGG 几何驱动</td><td>P1 第 5 月</td></tr>
+    <tr><td>Agent / 算法工程师（预研）</td><td>0.5</td><td>P1 末对接通用 MAS 接口占位、P2 预研</td><td>P1 第 5 月</td></tr>
+  </table>
+  <p class="note">人才缺口预警：OGG/CAD 几何工程师与离散事件仿真工程师为稀缺岗位，建议在 P0→P1 过渡期即启动招聘或锁定华为云/OGG 社区、第三方测评机构外脑支持。</p>
+
+  <h2>四、WBS 任务分解与甘特（6 个月）</h2>
+  <div class="gantt">
+    <div class="row"><div class="lbl">环境与选型锁定</div><div class="track2"><div class="bar b1" style="left:2%;width:30%">M1–M2</div></div></div>
+    <div class="row"><div class="lbl">OGG 几何链路开发</div><div class="track2"><div class="bar b1" style="left:18%;width:54%">M2–M5</div></div></div>
+    <div class="row"><div class="lbl">实时数据底座开发</div><div class="track2"><div class="bar b2" style="left:18%;width:54%">M2–M5</div></div></div>
+    <div class="row"><div class="lbl">集成联调 + 孪生闭环</div><div class="track2"><div class="bar b3" style="left:62%;width:28%">M5–M6</div></div></div>
+    <div class="row"><div class="lbl">M1 评审准备 + Demo</div><div class="track2"><div class="bar b0" style="left:82%;width:16%">M6</div></div></div>
+    <div class="axis"><span>M1</span><span>M2</span><span>M3</span><span>M4</span><span>M5</span><span>M6</span></div>
+  </div>
+  <table>
+    <tr><th style="width:8%">阶段</th><th style="width:22%">关键任务</th><th style="width:32%">主要产出</th><th style="width:16%">负责角色</th><th style="width:22%">里程碑</th></tr>
+    <tr><td>1</td><td>开发环境搭建；数据底座与 OGG 选型最终 POC 锁定</td><td>环境基线、选型决策纪要</td><td>架构师 + 几何/数据各 1</td><td>选型锁死</td></tr>
+    <tr><td>2</td><td>OGG 编译部署 + 首个 CAD 导入；边缘采集原型打通 1 点位</td><td>OGG 镜像、采集原型</td><td>几何 2 + 数据 2</td><td>双链路打通</td></tr>
+    <tr><td>3</td><td>OCCT 兼容验证；CAD 全格式交换；流处理 + 时序库联调</td><td>兼容报告、数据管道</td><td>几何 2 + 数据 2</td><td>兼容达标</td></tr>
+    <tr><td>4</td><td>几何误差标定（≤0.5mm）；同步延迟压测（≤200ms）</td><td>误差/延迟测量报告</td><td>测试 1 + 几何/数据</td><td>指标达标</td></tr>
+    <tr><td>5</td><td>集成联调；标杆场景孪生互动闭环；可视化看板</td><td>闭环 Demo、看板</td><td>全员</td><td>闭环可演示</td></tr>
+    <tr><td>6</td><td>M1 评审材料、Demo 打磨、P2 预研启动</td><td>评审包、预研输入</td><td>全员 + 仿真/算法</td><td>M1 门通过</td></tr>
+  </table>
+
+  <h2>五、构件 A：OGG 几何建模链路落地</h2>
+  <h3>5.1 部署与工程化</h3>
+  <ul class="steps">
+    <li><b>获取与合规：</b>OGG 源码托管于 <b>Gitee</b>（gitee.com/opengeometry，非 GitHub），<b>已开源可直接获取</b>：注册免费 Gitee 账号即可 clone / 下载 ZIP，<b>无审批环节</b>；许可证为 <b>LGPL 2.1</b>（继承自 OCCT，非 BSD）。页面\"公测招募\"是参与华为 486 项增强特性早期验证的<b>志愿计划（可选）</b>，非获取基础代码门槛。获取后内部镜像归档，避免外部依赖。<b>注意：</b>GitHub 上的 OpenGeometry-io（Rust→WASM 浏览器 CAD 内核，MPL-2.0）是<b>同名不同源</b>项目，切勿混淆。</li>
+    <li><b>容器化部署：</b>以 Linux 容器封装 OGG 运行时 + 依赖（几何内核编译工具链、Python/C++ 绑定）；纳入 CI 流水线，保证可复现构建。</li>
+    <li><b>CAD 数据交换：</b>打通 STEP / IGES / STL / OBJ 导入导出，建立与 PLM（产品生命周期管理）系统的对接通道，承接装备/产线原始几何。</li>
+  </ul>
+  <h3>5.2 OCCT 兼容验证清单</h3>
+  <table>
+    <tr><th style="width:34%">验证项</th><th style="width:33%">方法</th><th style="width:33%">通过判据</th></tr>
+    <tr><td>拓扑一致性</td><td>同一 BREP 模型分别在 OGG 与 OCCT 重建，比对边/面/体数量</td><td>拓扑等价，无破面/冗余</td></tr>
+    <tr><td>几何精度</td><td>关键尺寸（公差特征）在原 CAD、OGG、OCCT 三者间比对</td><td>偏差 ≤ 0.5mm（标尺）</td></tr>
+    <tr><td>格式往返</td><td>STEP 导出 → 再导入，检查信息损失</td><td>无拓扑/属性丢失</td></tr>
+    <tr><td>性能</td><td>中等复杂度装配体建模/布尔运算耗时</td><td>满足实时交互基线</td></tr>
+  </table>
+  <div class="note">为何保留 OCCT 退路：OGG 仍处生态早期，若个别几何算子稳定性不足，可经 OCCT 兜底再转 OGG 渲染。该双内核策略已在规划方案选型章节约定，P1 须实测验证切换成本。</div>
+
+  <h2>六、构件 B：实时数据底座</h2>
+  <h3>6.1 选型对照</h3>
+  <table>
+    <tr><th style="width:24%">候选路线</th><th style="width:30%">组成</th><th style="width:18%">适配度</th><th style="width:28%">取舍</th></tr>
+    <tr><td>开源自建路线<br><span class="tag yes">无云默认</span></td><td>EMQX（MQTT）+ Apache IoTDB / TDengine + Flink</td><td><span class="tag yes">高</span></td><td>自主可控、成本可控、<b>无需公有云</b>；工程量略大，但契合数据不出域与自主可控</td></tr>
+    <tr><td>OPC UA 直采路线<br><span class="tag cond">无云</span></td><td>边缘网关（OPC UA / Modbus）+ 轻量流处理</td><td><span class="tag cond">中</span></td><td>贴合车间设备、无需上云；需补充上层时序与可视化</td></tr>
+    <tr><td>华为云 IoT 路线<br><span class="tag cond">需上云</span></td><td>IoTDA + 规则引擎 + 时序库（DMS/InfluxDB）</td><td><span class="tag cond">视情况</span></td><td>仅当 P0 明确采用公有云部署时采用；与华为云生态协同好，但引入云依赖</td></tr>
+  </table>
+  <div class="warn"><b>无云即可推进：</b>默认走<b>开源自建路线（EMQX + IoTDB，无需公有云）</b>或 <b>OPC UA 直采（边缘，无需上云）</b>；华为云 IoT 仅当 P0 明确采用公有云部署时才采用。因此"部署模式=上云"不再是 P1 开工前提——<b>无云方案下 W1 几何链路与 W2-W3 数据底座均可正常推进</b>。</div>
+  <h3>6.2 边缘采集与同步架构</h3>
+  <p>物理实体 →（OPC UA / MQTT 边缘网关）→ 流处理（过滤/对齐）→ 时序库 → 孪生体几何模型增量更新 → 可视化呈现。关键机制：</p>
+  <ul class="steps">
+    <li><b>统一标识：</b>设备/部件赋予全局唯一 ID，并与 OGG 几何模型树节点绑定，确保"数据 → 几何"精确映射。</li>
+    <li><b>时钟对齐：</b>边缘侧打时间戳，流处理层做乱序与迟到补偿，保障同步延迟 ≤200ms。</li>
+    <li><b>增量更新：</b>孪生体仅更新变化部件的状态/位姿，避免全量重绘，支撑实时交互。</li>
+  </ul>
+
+  <h2>七、第一个月冲刺计划（30 天）</h2>
+  <table>
+    <tr><th style="width:14%">周次</th><th style="width:30%">重点</th><th style="width:56%">交付</th></tr>
+    <tr><td>W1</td><td>环境与选型 POC</td><td>开发容器就绪；数据底座 2 选 1 验证（华为云 vs 开源）；团队到岗</td></tr>
+    <tr><td>W2</td><td>OGG 首发 + 采集原型</td><td>OGG 编译部署成功；首个 CAD 模型导入渲染；1 台设备/1 点位边缘采集打通</td></tr>
+    <tr><td>W3</td><td>双链路贯通</td><td>数据流写入时序库；几何模型可被数据驱动更新</td></tr>
+    <tr><td>W4</td><td>阶段小结</td><td>双周评审；选型/架构定稿；输出 P1 月度进展报告</td></tr>
+  </table>
+
+  <h2>八、M1 评审门标准</h2>
+  <p>P1 结束须通过里程碑评审门 M1，方可进入 P2。评审材料与判据如下：</p>
+  <table>
+    <tr><th style="width:40%">交付物</th><th style="width:34%">验收判据</th><th style="width:26%">判定</th></tr>
+    <tr><td>OGG 几何建模链路 + OCCT 兼容报告</td><td>全格式交换可用；拓扑/几何精度达标</td><td><span class="tag yes">必须</span></td></tr>
+    <tr><td>实时数据底座（含边缘采集原型）</td><td>采集→存储→驱动更新链路贯通</td><td><span class="tag yes">必须</span></td></tr>
+    <tr><td>孪生互动闭环 Demo（录屏/现场）</td><td>≥1 设备/产线段可演示闭环</td><td><span class="tag yes">必须</span></td></tr>
+    <tr><td>几何误差 / 同步延迟测量报告</td><td>≤0.5mm / ≤200ms（标尺）</td><td><span class="tag yes">必须</span></td></tr>
+    <tr><td>后续接口占位文档（CAE / 数据流 / MAS）</td><td>接口契约 v0.1 评审通过</td><td><span class="tag cond">需要</span></td></tr>
+    <tr><td>P2 预研输入（仿真/智能层）</td><td>选型预研结论 + 接入计划</td><td><span class="tag cond">需要</span></td></tr>
+  </table>
+
+  <h2>九、技术风险与缓解</h2>
+  <table>
+    <tr><th style="width:26%">风险</th><th style="width:38%">影响</th><th style="width:36%">缓解</th></tr>
+    <tr><td>OGG 生态不成熟</td><td>个别几何算子不稳定</td><td>保留 OCCT 退路；选型期实测切换成本；跟踪社区</td></tr>
+    <tr><td>数据底座选型延迟</td><td>阻塞 P1 进度</td><td>第一月 POC 强制锁定；默认开源自建兜底</td></tr>
+    <tr><td>设备协议异构</td><td>采集接入成本高</td><td>统一 OPC UA/MQTT 边缘网关；先做 1 点位验证</td></tr>
+    <tr><td>几何与实时数据错位</td><td>孪生映射失真</td><td>早期定义全局 ID + 坐标体系；增量更新契约</td></tr>
+    <tr><td>P0 待确认项未拍板</td><td>范围/预算摇摆</td><td>设置门禁，先拍板再开工（见第十节）</td></tr>
+  </table>
+
+  <h2>十、P0 待确认项 → P1 门禁映射</h2>
+  <p>规划方案基线文档列出 6 项 P0 待确认项。其中<b>直接阻塞 P1 开工</b>的须先拍板，其余可并行推进：</p>
+  <table>
+    <tr><th style="width:24%">P0 待确认项</th><th style="width:16%">对 P1 影响</th><th style="width:60%">处理建议</th></tr>
+    <tr><td>部署模式（云/私有化+边缘）</td><td><span class="tag cond">不阻塞 W1</span></td><td>OGG 几何链路不依赖部署模式，W1 可立即开工；默认走无云方案（开源自建/OPC UA 直采），数据底座选型在 W2-W3 落实，华为云 IoT 仅作上云选项</td></tr>
+    <tr><td>预算（人力/授权）</td><td><span class="tag no">阻塞</span></td><td><span class="pill">门禁</span>决定团队扩编节奏与商业组件采购</td></tr>
+    <tr><td>场景边界（采集范围）</td><td><span class="tag no">阻塞</span></td><td><span class="pill">门禁</span>决定 W1 采集原型选哪台设备/产线</td></tr>
+    <tr><td>保真等级（二级/三级）</td><td><span class="tag cond">弱相关</span></td><td>P1 按标尺执行，等级在 P3 测评时定，可并行</td></tr>
+    <tr><td>工厂级验收阈值</td><td><span class="tag cond">弱相关</span></td><td>属 P2 仿真范畴，P1 不涉及</td></tr>
+    <tr><td>POC 范围（仿真引擎）</td><td><span class="tag cond">弱相关</span></td><td>属 P2 预研，P1 预留接口即可</td></tr>
+  </table>
+
+  <h2>十一、协作与开发规范</h2>
+  <ul class="steps">
+    <li><b>代码与文档：</b>Git 仓库 + 特性分支策略；本启动包、周报、接口契约文档统一沉淀。</li>
+    <li><b>接口契约优先：</b>五元构件以标准化接口连接——OGG 几何模型接口 / 实时数据流接口 / 通用 MAS（多智能体系统）接口。AI 层先以通用 MAS 占位，不提早绑定厂商（呼应规划方案 v1.5 原则）。</li>
+    <li><b>评审节奏：</b>每周站会 + 双周技术评审 + 月度进展报告；M1 为正式阶段评审门。</li>
+    <li><b>数据与合规：</b>全程使用脱敏/样例数据；涉及车间实时数据须满足等保与数据不出域要求。</li>
+  </ul>
+
+  <h2>十二、下一步（触发 P2 条件）</h2>
+  <div class="card"><b>M1 评审门通过后，即触发 P2：</b>接入 CAE 求解器（仿真保真）与解耦 Agent 智能层（智能保真），并用规划方案附录 C 的 POC 结论确定工厂级仿真引擎选型（Plant Simulation vs AnyLogic）。P1 预留的接口契约将在此刻复用，降低集成成本。</div>
+  <p class="note">闭环原则回顾：先以 OGG（几何保真）+ 数据底座（同步保真）把"骨架"立起来，再依次挂上仿真、智能、验证三层。P1 是整条链路能否立住的第一道硬关口。</p>
+
+  <h3>参考来源</h3>
+  <ul class="src">
+    <li>《智能数字孪生系统建设规划方案 v1.5》（D:\agent_digtaltwin\智能数字孪生系统建设规划方案.html）</li>
+    <li>《P0 需求规格与标准符合性基线 v1.0》（D:\agent_digtaltwin\P0需求规格与标准符合性基线.html）</li>
+    <li>华为 Open Geometry Group（OGG）Gitee 仓库（gitee.com/opengeometry，注册免费账号即可 clone）及 LGPL 2.1 许可声明</li>
+    <li>GB/T 43441.1-2023《智能制造 数字孪生 通用要求》；GB/T 45626-2025《装备数字孪生系统通用要求》；GB/T 45873-2025《车间数字孪生参考架构》</li>
+  </ul>
+
+  <footer>智能数字孪生系统 · P1 启动包 · 几何内核与实时数据底座打通 · 仅供内部立项与执行参考</footer>
+
+</div>
+</body>
+</html>

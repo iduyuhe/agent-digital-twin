@@ -1,0 +1,25 @@
+# ===== 私有 / 敏感（仅本地记忆，不含任何密钥）=====
+.workbuddy/
+
+# ===== 第三方 vendored 源码（1.1G Open CASCADE 几何内核，不入库）=====
+P1_W1_开工脚手架/ogg_src/
+
+# ===== 构建缓存 / 依赖 / 第三方工具 =====
+pptx_build/
+lo_profile/
+node_modules/
+__pycache__/
+*.pyc
+.cache/
+
+# ===== 运行时产物 =====
+*.db
+*.sqlite
+*.sqlite3
+_preview_db.db
+
+# ===== 日志 / 临时 =====
+*.log
+conv.log
+.DS_Store
+Thumbs.db

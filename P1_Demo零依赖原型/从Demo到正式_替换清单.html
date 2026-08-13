@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>从 Demo 到正式 · 递进替换清单（P1 W1–W6）</title>
+<style>
+  :root{--blue:#2563eb;--ink:#1f2937;--mut:#6b7280;--bg:#f8fafc;--line:#e5e7eb;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);line-height:1.65;}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 24px 64px;}
+  h1{font-size:26px;margin:0 0 6px;color:var(--blue);}
+  .sub{color:var(--mut);font-size:14px;margin-bottom:24px;}
+  h2{font-size:18px;margin:32px 0 12px;color:var(--ink);border-left:4px solid var(--blue);padding-left:10px;}
+  table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:13.5px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top;}
+  th{background:var(--blue);color:#fff;font-weight:600;}
+  tr:nth-child(even) td{background:#fbfdff;}
+  .pill{display:inline-block;background:#eff6ff;color:var(--blue);border-radius:12px;padding:1px 9px;font-size:12px;font-weight:600;}
+  .tag{display:inline-block;border-radius:6px;padding:1px 8px;font-size:12px;font-weight:600;}
+  .tag.yes{background:#dcfce7;color:#15803d;}
+  .tag.cond{background:#fef9c3;color:#a16207;}
+  .tag.no{background:#fee2e2;color:#b91c1c;}
+  code{background:#f1f5f9;padding:1px 6px;border-radius:4px;font-size:12.5px;}
+  .note{background:#f1f5f9;border-left:3px solid var(--blue);padding:10px 14px;font-size:13px;color:#374151;margin:12px 0;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:10px 0;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .foot{margin-top:40px;font-size:12px;color:var(--mut);border-top:1px solid var(--line);padding-top:14px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>从 Demo 到正式 · 递进替换清单</h1>
+  <div class="sub">智能数字孪生系统 · P1 几何内核与数据底座打通 · 按 W1–W6 排期 · 2026-08-13</div>
+
+  <div class="note">
+    策略：先用<b>零依赖 Demo</b>跑通端到端闭环（几何 numpy / 数据 SQLite / 智能 规则），再<b>逐周把占位组件替换为正式构件</b>，
+    每周有可验收交付物，架构契约不变、只换引擎。替换不是重写，是<b>"换零件不换骨架"</b>。
+  </div>
+
+  <h2>一、占位 → 正式 构件对照</h2>
+  <table>
+    <tr><th>层</th><th>Demo 占位（已交付）</th><th>正式构件（替换目标）</th><th>替换关键动作</th><th>保真维度</th></tr>
+    <tr><td><b>① 几何</b></td><td>numpy + plotly 生成几何体</td><td>pythonocc-core → 正式编译 OGG</td><td>装 pythonocc（免编译）→ 替换 numpy；后期编译 OGG 替换 pythonocc</td><td>几何保真</td></tr>
+    <tr><td><b>④ 数据底座</b></td><td>Python 队列 + SQLite 时序</td><td>EMQX + IoTDB / OPC UA 直采</td><td>部署 broker → 接真实设备/MES/SCADA → 历史数据时序落库</td><td>同步保真</td></tr>
+    <tr><td><b>② 智能</b></td><td>规则引擎（阈值告警）</td><td>通用 MAS 接口 + 本地 LLM（Ollama+DeepSeek/GLM）</td><td>接 Ollama 本地模型 → 实现 MAS 接口 → 规则层退为兜底</td><td>智能保真</td></tr>
+    <tr><td><b>③ 仿真</b></td><td>（Demo 未含）</td><td>装备 CAE（Simdroid 等）+ 工厂级仿真（Plant Simulation/AnyLogic）</td><td>P2 启动；P1 末预留STEP/数据接口</td><td>仿真保真</td></tr>
+    <tr><td><b>⑤ 验证</b></td><td>（Demo 未含）</td><td>模型验证体系（标定—虚实对照—虚实验证）</td><td>P3 启动；P1 起留痕几何/同步基线</td><td>验证保真</td></tr>
+  </table>
+
+  <h2>二、W1–W6 递进排期（P1 期，约 6 个月压缩示意）</h2>
+  <table>
+    <tr><th>周</th><th>主题</th><th>本周替换/动作</th><th>交付物</th><th>验收门</th></tr>
+    <tr>
+      <td><b>W1</b></td><td>环境 + 几何起步</td>
+      <td>本地跑 Demo；几何层切 <code>pythonocc-core</code>（免编译真 OCCT），输出体积/表面积/STEP</td>
+      <td>几何建模脚本（真 OCCT）+ STEP 样例</td><td>几何指标可算、CAD 可导出</td>
+    </tr>
+    <tr>
+      <td><b>W2</b></td><td>几何深化 + 数据底座</td>
+      <td>pythonocc 接复杂装配；数据层起 EMQX（Mosquitto 轻量先行）替代 SQLite 队列</td>
+      <td>装配建模 Demo + MQTT 采集骨架</td><td>消息可收发、结构可渲染</td>
+    </tr>
+    <tr>
+      <td><b>W3</b></td><td>时序库 + 同步</td>
+      <td>接 IoTDB 时序落库；统一实体 ID + 时钟对齐 + 增量更新（对标 GB/T 43441 同步）</td>
+      <td>实时同步最小闭环（采集→落库→回显）</td><td>同步延迟 ≤200ms（标尺）</td>
+    </tr>
+    <tr>
+      <td><b>W4</b></td><td>智能层接入</td>
+      <td>智能层切 <code>Ollama 本地 LLM</code> 实现通用 MAS 接口；规则层退为兜底</td>
+      <td>本地 LLM 诊断原型 + MAS 接口契约</td><td>LLM 诊断可用、规则兜底生效</td>
+    </tr>
+    <tr>
+      <td><b>W5</b></td><td>集成联调</td>
+      <td>几何 + 数据 + 智能三件集成；对标 W1–W4 指标；预留 STEP/数据接口给 P2 仿真</td>
+      <td>标杆场景端到端 Demo（装备级）</td><td>三件联动、无数据孤岛</td>
+    </tr>
+    <tr>
+      <td><b>W6</b></td><td>M1 评审 + 正式前置</td>
+      <td>编译 OGG 替换 pythonocc（构建机就位）；<b>M1 评审门</b>（几何+同步达标）</td>
+      <td>OGG 编译产物 + M1 评审包</td><td><span class="tag yes">M1 通过</span></td>
+    </tr>
+  </table>
+
+  <h2>三、关键约束与门禁</h2>
+  <div class="card"><b>① 构建机门禁：</b>W6 编译 OGG 需 Linux 构建机（≥8 核/16G 推荐）或华为云 ECS。W1–W5 用 pythonocc 免编译，<b>不阻塞</b>。</div>
+  <div class="card"><b>② 场景边界门禁：</b>W3 接真实设备/MES 取决于 P0 待确认项"场景边界"（选哪台设备/产线）。Demo 阶段用模拟数据，不阻塞。</div>
+  <div class="card"><b>③ 部署模式：</b>全程默认无云私有化（EMQX/IoTDB 本地 + Ollama 本地），华为云 IoT 非必需。</div>
+  <div class="card"><b>④ 合规边界：</b>Demo 与 W1–W5 均为<b>概念验证</b>，不构成 GB/T 45626 合规证据；正式合规需 P3 走 CESI 测评。</div>
+
+  <h2>四、与现有交付物衔接</h2>
+  <table>
+    <tr><th>已有文件</th><th>作用</th></tr>
+    <tr><td>智能数字孪生系统建设规划方案.html（v1.5）</td><td>P0–P3 总体架构与路线</td></tr>
+    <tr><td>P1启动包_几何内核与数据底座打通.html（v1.0）</td><td>P1 详细 WBS 与门禁</td></tr>
+    <tr><td>P1_Demo零依赖原型/（demo_app.py 等）</td><td>本清单的"第 0 周"起点</td></tr>
+    <tr><td>demo_geometry_occ.py / demo_agent_local_llm.py</td><td>本清单 W1 / W4 的替换实现</td></tr>
+  </table>
+
+  <div class="foot">
+    生成日期：2026-08-13 · 配套 P1 零依赖 Demo 原型 · 替换路线遵循"先闭环、后个性化、换引擎不换骨架"原则
+  </div>
+</div>
+</body>
+</html>

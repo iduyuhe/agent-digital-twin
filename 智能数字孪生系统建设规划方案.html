@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能数字孪生系统建设规划方案（OGG 几何内核 + 解耦 Agent 智能层）</title>
+<style>
+  :root{
+    --blue:#2563eb; --ink:#0f172a; --gray:#475569; --line:#e2e8f0; --bg:#f8fafc;
+    --soft-blue:#eff6ff; --soft-gray:#f1f5f9; --amber:#f59e0b;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--ink);background:#fff;line-height:1.78;font-size:15px;}
+  .wrap{max-width:1000px;margin:0 auto;padding:48px 36px 90px;}
+  h1{font-size:26px;line-height:1.35;margin:0 0 6px;letter-spacing:-.3px;}
+  .sub{color:var(--gray);font-size:13.5px;margin-bottom:26px;border-bottom:1px solid var(--line);padding-bottom:18px;}
+  h2{font-size:20px;margin:44px 0 14px;padding-left:12px;border-left:4px solid var(--blue);}
+  h3{font-size:16px;margin:24px 0 8px;color:var(--blue);}
+  p{margin:10px 0;}
+  .lead{font-size:15px;color:var(--gray);}
+  .verdict{background:var(--soft-blue);border:1px solid #bfdbfe;border-radius:12px;padding:20px 22px;margin:24px 0;}
+  .verdict h3{margin-top:0;color:var(--blue);}
+  .verdict .row{display:flex;gap:14px;align-items:flex-start;margin:10px 0;}
+  .tag{display:inline-block;min-width:74px;text-align:center;font-size:12px;font-weight:700;
+    padding:4px 8px;border-radius:999px;flex-shrink:0;}
+  .tag.yes{background:#dcfce7;color:#15803d;}
+  .tag.cond{background:#fef9c3;color:#854d0e;}
+  .tag.no{background:#fee2e2;color:#b91c1c;}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px;}
+  th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top;}
+  th{background:var(--soft-gray);font-weight:700;color:#1e293b;}
+  tr:nth-child(even) td{background:var(--bg);}
+  .code{font-family:"SF Mono",Consolas,monospace;background:var(--soft-gray);padding:2px 6px;border-radius:5px;font-size:13px;}
+  .note{background:var(--soft-gray);border-left:4px solid var(--gray);padding:12px 16px;margin:16px 0;font-size:14px;color:var(--gray);}
+  .warn{background:#fffbeb;border-left:4px solid var(--amber);padding:12px 16px;margin:16px 0;font-size:14px;}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:14px 0;}
+  .steps li{counter-increment:s;position:relative;padding:12px 0 12px 48px;border-bottom:1px dashed var(--line);}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:10px;width:32px;height:32px;
+    background:var(--blue);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:10px 0;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .card b{color:var(--blue);}
+  .src li{font-size:13px;color:var(--gray);margin:6px 0;}
+  svg{display:block;margin:18px auto;max-width:100%;}
+  footer{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:#94a3b8;}
+  /* gantt */
+  .gantt{margin:18px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .gantt .row{display:flex;align-items:center;border-bottom:1px solid var(--line);}
+  .gantt .row:last-child{border-bottom:none;}
+  .gantt .lbl{width:200px;flex-shrink:0;padding:10px 14px;font-size:13.5px;font-weight:600;background:var(--soft-gray);}
+  .gantt .track{position:relative;flex:1;height:54px;background:
+    repeating-linear-gradient(90deg,transparent,transparent 59px,#eef2f7 59px,#eef2f7 60px);}
+  .gantt .bar{position:absolute;top:14px;height:26px;border-radius:6px;color:#fff;font-size:12px;
+    display:flex;align-items:center;padding:0 8px;white-space:nowrap;font-weight:600;}
+  .b0{background:#94a3b8;} .b1{background:#2563eb;} .b2{background:#0ea5e9;} .b3{background:#7c3aed;}
+  .axis{display:flex;margin-left:200px;font-size:11.5px;color:var(--gray);border-top:1px dashed var(--line);}
+  .axis span{flex:1;text-align:center;padding:4px 0;}
+  .pill{display:inline-block;background:var(--soft-blue);color:var(--blue);font-size:11.5px;font-weight:700;
+    padding:2px 8px;border-radius:999px;margin:2px 4px 2px 0;}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0;}
+  .kpi .box{background:var(--soft-blue);border:1px solid #bfdbfe;border-radius:10px;padding:14px;text-align:center;}
+  .kpi .num{font-size:22px;font-weight:800;color:var(--blue);}
+  .kpi .cap{font-size:12px;color:var(--gray);margin-top:4px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>智能数字孪生系统建设规划方案<br><span style="font-size:18px;color:var(--gray);">基于华为 OGG 几何内核 + 解耦 Agent 智能层</span></h1>
+<div class="sub">建设规划方案 · v1.5 · 2026-08-07 · 含附录A 数据需求表 / 附录B 仿真引擎选型 / 附录C POC验证大纲 · Agent通用MAS接口约定 · 弱化"刻意追求自主可控" · 供立项评审、预算申报与里程碑管理参考</div>
+
+<div class="note" style="border-left-color:#2563eb;background:#eff6ff;">
+<b>本方案与上一份论证报告的关系：</b>论证报告（可行性 + 工信部高保真标准符合性）已确认"方向可行、架构成立"。本方案在此基础上，<b>把结论转化为可执行的建设工程</b>——含目标、架构、选型、分期路线、团队、预算口径、风险与认证路径。文中带<span class="pill">默认假设</span>之处为启动前需与业务方最终确认的参数，不影响整体框架。
+</div>
+
+<h2>一、执行摘要</h2>
+<div class="verdict">
+  <h3>一页纸结论</h3>
+  <div class="row"><span class="tag yes">方向</span>
+    <div>采用"<b>华为 OGG（几何内核，锁定）+ 解耦 Agent 智能层（厂商无关、按指标选型）+ 仿真保真层（装备 CAE + 工厂级仿真）+ 实时数据底座 + 模型验证体系</b>"架构，构建自主可控、覆盖"<b>装备—车间—工厂</b>"的高保真智能数字孪生系统。技术可行，标准适配度高。</div></div>
+  <div class="row"><span class="tag cond">建设路径</span>
+    <div>建议分 <b>4 期 / 约 18 个月</b>推进：P0 立项与标准基线 → P1 几何内核与数据底座打通 → P2 仿真保真与智能层接入 → P3 系统集成、验证与测评认证。每期设硬交付物与里程碑评审门。</div></div>
+  <div class="row"><span class="tag cond">合规</span>
+    <div>"高保真"符合性不以组件判定，而由<b>最终交付的系统</b>通过 <b>GB/T 43441 系列 / GB/T 45626-2025</b> 设计与 <b>CESI 成熟度测试 / 可信性测评</b>认证来证明。规划中将保真指标写入验收基线。</div></div>
+  <div class="row"><span class="tag no">关键前提</span>
+    <div>OGG 解决<b>几何保真</b>、解耦 Agent 解决<b>智能保真</b>；但<b>仿真保真（装备 CAE + 工厂级生产系统仿真）、同步保真（IoT）、验证保真（建模验证流程）</b>三块必须补齐，单靠 OGG+Agent 达不到国标"高保真"门槛。</div></div>
+</div>
+
+<h2>二、规划前提与建设必要性</h2>
+
+<h3>2.1 规划前提（启动前确认）<span class="pill">默认假设</span></h3>
+<table>
+  <tr><th style="width:26%">前提项</th><th>默认设定</th><th>说明</th></tr>
+  <tr><td>目标场景</td><td>装备 + 车间 + <b>工厂级仿真</b></td><td>主走 GB/T 45626-2025（装备）、GB/T 45873-2025（车间），强化"<b>工厂级生产系统仿真</b>"能力（离散事件/物流/产能/排程）。工厂级仿真<b>两类场景都需要</b>：①新建工厂虚拟验证（布局/产线设计仿真）；②存量工厂产能优化与爬坡推演、供应链协同。如需城市/管网场景，架构可平移但指标需重定。</td></tr>
+  <tr><td>建设周期</td><td>18 个月分 4 期</td><td>2026 Q3 启动，2028 Q1 完成首轮测评认证。</td></tr>
+  <tr><td>保真等级</td><td>瞄准"高保真"二级 / 三级</td><td>对应可信性测评三级等级中的中高阶；最终等级依招标/验收要求定。</td></tr>
+  <tr><td>部署形态</td><td>私有化 + 边缘</td><td>几何建模与仿真在本地/私有云，实时采集在边缘侧，符合等保与数据不出域要求。</td></tr>
+  <tr><td>预算口径</td><td>待定（本文给估算口径）</td><td>第 10 章给出"人月 + 软硬件 + 测评"结构化估算框架与示例区间，落地时填充。</td></tr>
+</table>
+
+<h3>2.2 建设必要性</h3>
+<div class="card"><b>① 政策牵引。</b>《国家智能制造标准体系建设指南（2024版）》已将数字孪生列为独立标准子体系；装备/车间数字孪生国标于 2025 年密集落地，进入"有标可依、按标验收"阶段，先行建设可抢占招投标与示范项目窗口。</div>
+<div class="card"><b>② 自主可控诉求。</b>几何内核是工业软件"根技术"。采用华为 OGG（LGPL 2.1 开源、国产替代 OCCT）作为几何保真锚点，规避对法国 OCCT / 西门子 Parasolid / 达索 CGM 的底层依赖，符合供应链安全要求。</div>
+<div class="card"><b>③ 业务价值。</b>高保真孪生可支撑预测性维护、工艺仿真优化、虚拟调试、远程运维，直接降低停机损失与试错成本，是装备/制造企业数字化升级的核心基础设施。</div>
+<div class="card"><b>④ 智能层解耦红利。</b>AI 大模型半年一迭代，智能层保持厂商无关、按指标选型，既保障合规（国标不看厂商），又避免把变化最快的 AI 层焊死在单一云厂商。</div>
+<div class="card"><b>⑤ 工厂级仿真诉求。</b>装备/线级孪生解决"单机最优"，<b>工厂级生产系统仿真</b>（布局/物流/排程/产能）解决"全局最优"，可支撑新建工厂虚拟验证、产能爬坡推演与供应链协同，是数字化工厂从"点"到"面"的关键跃迁，也是 GB/T 45873 车间/工厂孪生的核心能力。<b>新建厂虚拟验证与存量产能优化两类场景并重。</b></div>
+
+<h2>三、总体目标与建设原则</h2>
+
+<h3>3.1 总体目标</h3>
+<p>建成一套<b>自主可控、高保真、可认证</b>的智能数字孪生系统，满足 GB/T 43441 / GB/T 45626-2025 / GB/T 45873-2025 核心技术要求，具备<b>装备级物理仿真与工厂级生产系统仿真双重能力</b>，通过 CESI 成熟度或可信性测评，达到"高保真"二级及以上等级，并在至少 <b>1 个标杆装备/产线场景与工厂级仿真场景（覆盖新建厂验证与存量产能优化两类）</b>完成闭环验证与商业落地。</p>
+
+<h3>3.2 量化目标（验收基线 · 写入合同/招标文件）</h3>
+<div class="kpi">
+  <div class="box"><div class="num">≤0.5mm</div><div class="cap">几何误差（精密装配）</div></div>
+  <div class="box"><div class="num">≤±0.5%</div><div class="cap">仿真误差率</div></div>
+  <div class="box"><div class="num">≤200ms</div><div class="cap">实时同步延迟（通用）</div></div>
+  <div class="box"><div class="num">AE/II/III</div><div class="cap">可信性测评等级目标</div></div>
+</div>
+<div class="note">上述阈值为第三方测评与行业采购常用"高保真"标尺（<b>非国标强制数值</b>），具体达标值应在需求基线阶段按目标测评等级与行业条款锁定。</div>
+
+<h3>3.3 建设原则</h3>
+<p><span class="pill">自主可控</span>几何内核锚定国产、智能层开放选优；<span class="pill">通用接口</span>Agent 层采用通用 MAS 接口标准，不与厂商/框架绑定，先闭环后个性化；<span class="pill">标准先行</span>架构对标 GB/T、验收按测评；<span class="pill">闭环可信</span>建模型验证流程、虚实验证留痕；<span class="pill">分期交付</span>每期有硬交付物与评审门；<span class="pill">解耦可替换</span>五元构件接口标准化、可单独升级。</p>
+
+<h2>四、总体架构设计</h2>
+
+<h3>4.1 五元分层架构</h3>
+<svg viewBox="0 0 700 400" width="700" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#2563eb"/></marker>
+    <style>
+      .bx{fill:#fff;stroke:#2563eb;stroke-width:1.5;}
+      .bxg{fill:#eff6ff;stroke:#2563eb;stroke-width:1.5;}
+      .bxa{fill:#fff;stroke:#2563eb;stroke-width:1.5;stroke-dasharray:6 3;}
+      .bxn{fill:#fff;stroke:#94a3b8;stroke-width:1.5;stroke-dasharray:4 3;}
+      .t{font-family:-apple-system,"PingFang SC",sans-serif;font-size:12.5px;fill:#0f172a;}
+      .th{font-size:13px;font-weight:700;fill:#1e3a8a;}
+      .lbl{font-size:11px;fill:#475569;}
+    </style>
+  </defs>
+
+  <!-- standards -->
+  <rect x="40" y="18" width="620" height="50" rx="10" class="bxg"/>
+  <text x="60" y="40" class="th">工信部 / 国标 标准体系（系统级合规层）</text>
+  <text x="60" y="58" class="lbl">GB/T 43441.1/.2 · GB/T 45626-2025（装备DT）· GB/T 45873-2025（车间DT）</text>
+
+  <!-- OGG -->
+  <rect x="40" y="100" width="190" height="92" rx="10" class="bx"/>
+  <text x="58" y="122" class="th">① 华为 OGG（几何内核）</text>
+  <text x="58" y="144" class="lbl">3D 曲面/实体建模</text>
+  <text x="58" y="162" class="lbl">CAD 交换 · 可视化</text>
+  <text x="58" y="180" class="lbl">→ 几何保真</text>
+
+  <!-- Sim -->
+  <rect x="255" y="100" width="190" height="92" rx="10" class="bxn"/>
+  <text x="273" y="122" class="th">③ 仿真保真层（需补）</text>
+  <text x="273" y="142" class="lbl">装备 CAE 多物理场</text>
+  <text x="273" y="160" class="lbl">+ 工厂级生产系统仿真</text>
+  <text x="273" y="180" class="lbl">→ 仿真保真</text>
+
+  <!-- Agent -->
+  <rect x="470" y="100" width="190" height="92" rx="10" class="bxa"/>
+  <text x="488" y="122" class="th">② 解耦 Agent 层（虚线）</text>
+  <text x="488" y="144" class="lbl">国产 LLM + 开源框架</text>
+  <text x="488" y="162" class="lbl">诊断 · 预测 · 决策</text>
+  <text x="488" y="180" class="lbl">→ 智能保真</text>
+
+  <!-- Validation -->
+  <rect x="40" y="212" width="300" height="58" rx="10" class="bxn"/>
+  <text x="58" y="236" class="th">⑤ 模型验证体系（需建）</text>
+  <text x="58" y="256" class="lbl">模型标定 · 虚实对照 · 虚实验证（GB/T 45626 7.3/7.5）</text>
+
+  <!-- IoT -->
+  <rect x="370" y="212" width="290" height="58" rx="10" class="bxn"/>
+  <text x="388" y="236" class="th">④ 实时数据底座（需补）</text>
+  <text x="388" y="256" class="lbl">华为云 IoT / 自选型 · 实时采集·同步·双向映射</text>
+
+  <!-- arrows -->
+  <line x1="135" y1="192" x2="135" y2="210" stroke="#2563eb" stroke-width="1.4" marker-end="url(#ar)"/>
+  <line x1="350" y1="192" x2="350" y2="210" stroke="#2563eb" stroke-width="1.4" marker-end="url(#ar)"/>
+  <line x1="565" y1="192" x2="565" y2="210" stroke="#2563eb" stroke-width="1.4" marker-end="url(#ar)"/>
+  <line x1="340" y1="146" x2="253" y2="146" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+  <line x1="190" y1="231" x2="368" y2="231" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+  <line x1="515" y1="241" x2="455" y2="241" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+  <line x1="135" y1="68" x2="135" y2="98" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+  <line x1="350" y1="68" x2="350" y2="98" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+  <line x1="565" y1="68" x2="565" y2="98" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+</svg>
+<p class="note">图例：<b>实线蓝框</b>=锁定件（OGG 几何内核）；<b>虚线蓝框</b>=解耦件（Agent 智能层，厂商无关可替换）；<b>灰色虚线框</b>=需补齐/需自建件（装备 CAE + 工厂级仿真、实时数据底座、模型验证）；<b>灰色虚线箭头</b>=受国标约束的合规对齐关系。③仿真保真层一并覆盖"装备级物理仿真"与"工厂级生产系统仿真"两类。</p>
+
+<h3>4.2 数据流与闭环</h3>
+<p>物理实体 →（④实时数据底座采集/同步）→ ①OGG 几何模型 + ③装备 CAE / 工厂级仿真模型 ←（⑤模型验证体系虚实对照标定）→ ②解耦 Agent 层分析预测/故障诊断/决策优化 →（④反馈控制）→ 物理实体。五元件通过标准化接口契约连接，任一构件可独立升级替换，避免锁定。</p>
+
+<h2>五、关键技术选型</h2>
+<table>
+  <tr><th style="width:18%">层</th><th style="width:30%">推荐选型</th><th>选型理由与边界</th></tr>
+  <tr><td><b>① 几何内核</b><br>几何保真</td><td>华为 OGG（锁定）<br>保留 OCCT 兼容退路</td><td>LGPL 2.1 开源、国产替代 OCCT；提供曲面/实体建模、CAD 交换、可视化。极端工况/超大装配需做成熟度验证。<b>不含物理仿真。</b></td></tr>
+  <tr><td><b>② Agent 智能层</b><br>智能保真</td><td>厂商无关：国产 LLM（ GLM / 通义 / DeepSeek）+ 开源框架（LangGraph / AutoGen / CrewAI）；<b>接口采用通用 MAS（多智能体系统）标准</b></td><td>满足 GB/T 45626 故障诊断(6.4)/状态预测(6.5) 与可信性预测/操控精度即可；华为 Agent 作参考范式而非强制。Agent 间及对外接口统一用通用 MAS 协议，不与特定框架/厂商绑定，避免锁定；<b>不自建厂商锁定，也不将国产替代列为 P0 验收硬指标</b>——深度自主可控作为闭环后的个性化迭代项。</td></tr>
+  <tr><td><b>③ 仿真保真层</b><br>仿真保真</td><td>装备 CAE（国产 Simdroid / 开源 CalculiX·Code_Aster）+ OGG 几何驱动；<b>工厂级仿真引擎</b>（离散事件·物流·产能·排程，如 Plant Simulation·AnyLogic 或国产替代）</td><td>装备 CAE 承担 GB/T 45626 仿真(6.1) 物理机理；<b>工厂级仿真引擎</b>承担车间/工厂生产系统仿真（GB/T 45873），覆盖布局/物流/排程/产能。两者共同构成"仿真保真"，是"高保真"核心。</td></tr>
+  <tr><td><b>④ 实时数据底座</b><br>同步保真</td><td>华为云 IoT 数据分析（DTML + 十万级并发）或自选型边缘时序平台</td><td>承担 GB/T 43441 "适当速率和精度同步"；毫秒级采集、双向映射、边缘预处理。选型受等保/数据不出域约束。</td></tr>
+  <tr><td><b>⑤ 模型验证体系</b><br>验证保真</td><td>自建流程 + CESI 测评工具链</td><td>落实 GB/T 45626 模型验证(7.3)/虚实验证与评估(7.5)；提供"虚对实"可信映射证据，是合规关键。</td></tr>
+</table>
+
+<h2>六、标准符合性规划</h2>
+<h3>6.1 条款—构件映射（承接论证报告）</h3>
+<table>
+  <tr><th style="width:26%">GB/T 45626-2025 条款</th><th style="width:22%">能力</th><th style="width:30%">承担构件</th><th>满足度</th></tr>
+  <tr><td>几何/可视化 6.2</td><td>高精度几何、数据交换</td><td>① OGG</td><td><span class="tag yes">强</span></td></tr>
+  <tr><td>仿真 6.1</td><td>物理场仿真</td><td>③ CAE 求解器</td><td><span class="tag cond">需补</span></td></tr>
+  <tr><td>GB/T 45873 车间/工厂孪生</td><td>生产系统仿真·布局物流·产能（新建验证+存量优化）</td><td>③ 工厂级仿真引擎</td><td><span class="tag cond">需补</span></td></tr>
+  <tr><td>状态监控 6.3</td><td>实时映射</td><td>④ 实时数据底座</td><td><span class="tag cond">需补</span></td></tr>
+  <tr><td>故障诊断 6.4</td><td>异常/根因</td><td>② 解耦 Agent 层（按指标选型）</td><td><span class="tag yes">强</span></td></tr>
+  <tr><td>状态预测 6.5</td><td>预测性维护</td><td>② 解耦 Agent 层</td><td><span class="tag yes">强</span></td></tr>
+  <tr><td>模型验证 7.3 / 虚实验证 7.5</td><td>可信映射</td><td>⑤ 模型验证体系</td><td><span class="tag cond">需建</span></td></tr>
+  <tr><td>连接交互 7.4</td><td>双向映射/反馈</td><td>④ + ② 闭环</td><td><span class="tag yes">强</span></td></tr>
+</table>
+<h3>6.2 保真指标承诺（写入验收基线）</h3>
+<p>在 P0 需求基线阶段，将几何误差、装备仿真误差率、<b>工厂级仿真指标（产能/物流节拍预测误差、排程达成率）</b>、同步延迟、预测/操控精度、决策一致性等量化指标按<b>目标测评等级</b>锁定为合同验收条款，避免后期争议。详见第 3.2 节。</p>
+
+<h2>七、分阶段建设路线图（4 期 / 约 18 个月）</h2>
+
+<div class="gantt">
+  <div class="row"><div class="lbl">P0 立项与标准基线</div><div class="track"><div class="bar b0" style="left:0%;width:11%">2026 Q3</div></div></div>
+  <div class="row"><div class="lbl">P1 几何内核+数据底座</div><div class="track"><div class="bar b1" style="left:11%;width:30%">2026 Q4–2027 Q2</div></div></div>
+  <div class="row"><div class="lbl">P2 仿真+智能层接入</div><div class="track"><div class="bar b2" style="left:41%;width:30%">2027 Q3–2027 Q4</div></div></div>
+  <div class="row"><div class="lbl">P3 集成·验证·测评</div><div class="track"><div class="bar b3" style="left:71%;width:29%">2028 Q1</div></div></div>
+  <div class="axis"><span>2026Q3</span><span>Q4</span><span>2027Q1</span><span>Q2</span><span>Q3</span><span>Q4</span><span>2028Q1</span></div>
+</div>
+
+<div class="steps">
+  <li><b>P0 · 立项与标准基线（2026 Q3，约 1.5 月）。</b>明确场景（装备/车间/<b>工厂级仿真</b>）、保真等级、验收指标基线；完成 GB/T 45626 / 45873 条款解读与差距分析；确定 OGG / 装备 CAE / 工厂级仿真引擎 / Agent / 数据底座选型清单；产出《需求规格与标准符合性基线》+ 立项评审通过。</li>
+  <li><b>P1 · 几何内核与数据底座打通（2026 Q4–2027 Q2，约 6 月）。</b>部署 OGG 几何建模链路（含 OCCT 兼容验证）；搭建实时数据底座（边缘采集 + 同步），同步规划<b>工厂级仿真所需数据与模型底座</b>（布局/BOM/节拍/产能）；完成数字实体几何模型与实时孪生互动最小闭环；交付"<b>几何保真 + 同步保真</b>"Demo，通过里程碑评审门 M1。</li>
+  <li><b>P2 · 仿真保真与智能层接入（2027 Q3–Q4，约 6 月）。</b>集成<b>装备 CAE 求解器与工厂级仿真引擎</b>，实现装备多物理场仿真（OGG 几何驱动）与<b>工厂级生产系统仿真（布局/物流/排程/产能）</b>；接入解耦 Agent 层（诊断/预测/决策）；打通"<b>仿真保真 + 智能保真</b>"；在标杆装备场景完成虚拟调试与预测性维护原型，并完成 <b>工厂级仿真双场景闭环：新建厂虚拟验证 + 存量产能优化/物流推演</b>，通过评审门 M2。</li>
+  <li><b>P3 · 系统集成、验证与测评认证（2028 Q1，约 4.5 月）。</b>全系统集成（含工厂级仿真与装备仿真联动）；建立模型验证体系（标定—虚实对照—虚实验证）；自检 GB/T 45626 / 45873 / 43441 全条款；申报 CESI 成熟度测试或可信性测评（14/17 项指标），获取等级证书；标杆装备场景与工厂级仿真双场景（新建验证+存量优化）商业验收；产出《运维手册 + 测评证书》，项目结项。</li>
+</div>
+
+<h2>八、组织与团队配置</h2>
+<table>
+  <tr><th style="width:30%">角色</th><th style="width:12%">建议人数</th><th>职责</th></tr>
+  <tr><td>项目负责人 / 架构师</td><td>1</td><td>总体方案、里程碑、跨构件协调、标准符合性总责</td></tr>
+  <tr><td>几何内核 / 建模工程师</td><td>2</td><td>OGG 集成、CAD 数据交换、几何模型构建与精度验证</td></tr>
+  <tr><td>仿真工程师（装备 CAE + 工厂级）</td><td>2–3</td><td>装备物理场建模与求解器对接；<b>工厂级离散事件/生产系统仿真</b>（布局/物流/排程/产能）、仿真误差标定</td></tr>
+  <tr><td>物联网 / 数据工程师</td><td>2</td><td>实时采集、边缘计算、同步通道、双向映射</td></tr>
+  <tr><td>AI / Agent 工程师</td><td>2</td><td>解耦 Agent 层框架、诊断/预测模型、决策闭环</td></tr>
+  <tr><td>标准 / 测评工程师</td><td>1</td><td>国标条款落地、模型验证流程、测评申报</td></tr>
+  <tr><td>测试 / 验证工程师</td><td>2</td><td>虚实对照、性能压测、验收基线核对</td></tr>
+</table>
+<p class="note">核心团队约 <b>12–13 人</b>（含工厂级仿真扩充）。P0 轻量启动（3–4 人），P1 起扩至满编；可借助华为云/OGG 社区与第三方测评机构外脑补齐稀缺能力。</p>
+
+<h2>九、风险识别与应对</h2>
+<table>
+  <tr><th style="width:24%">风险</th><th style="width:30%">影响</th><th>应对措施</th></tr>
+  <tr><td>混淆"几何内核"与"平台"</td><td>仿真/实时互动缺口</td><td>架构强制五元分层；P1/P2 明确补齐 CAE 与数据底座</td></tr>
+  <tr><td>OGG 生态年轻</td><td>极端工况成熟度不足</td><td>保留 OCCT 兼容退路；P1 做选型验证</td></tr>
+  <tr><td>组件≠合规</td><td>自评达标但测评不过</td><td>按系统级 GB/T 设计；P3 走 CESI 实测拿证</td></tr>
+  <tr><td>AI 层厂商锁定</td><td>换代被动、成本高</td><td>Agent 解耦、接口标准化、厂商无关选型</td></tr>
+  <tr><td>等保 / 数据不出域</td><td>合规与部署受阻</td><td>私有化+边缘部署；P0 即做安全架构设计</td></tr>
+  <tr><td>保真指标争议</td><td>验收扯皮</td><td>P0 将量化指标写入合同验收基线</td></tr>
+  <tr><td>工厂级仿真数据粒度不足</td><td>产能/物流仿真失真</td><td>P1 即规划工厂数据采集（布局/BOM/节拍）；选用可对接 MES/ERP 的仿真引擎</td></tr>
+</table>
+
+<h2>十、投资估算口径 <span class="pill">框架</span></h2>
+<p>以下为<b>结构化估算框架与示例区间</b>，落地时按实际选型填充。单位：人民币万元。</p>
+<table>
+  <tr><th style="width:26%">科目</th><th style="width:16%">构成</th><th style="width:22%">示例区间（参考）</th><th>说明</th></tr>
+  <tr><td>人力（约 12–13 人 × ≈18 月）</td><td>研发人工</td><td>见人月核算</td><td>按城市/资级单价 × 人月；占比通常最大（含工厂级仿真扩充）</td></tr>
+  <tr><td>软硬件 / 云资源</td><td>华为云 + 私有算力</td><td>依据规模核定</td><td>几何/仿真算力、IoT 平台订阅或自建</td></tr>
+  <tr><td>第三方仿真授权</td><td>商业 CAE / 工厂级仿真引擎许可</td><td>依据授权模式</td><td>若选商业 CAE 或商业工厂级仿真引擎（如 Plant Simulation）；开源路线可省</td></tr>
+  <tr><td>测评认证费</td><td>CESI 测评</td><td>按测评项计</td><td>成熟度(14项)/可信性(17项)申报费</td></tr>
+  <tr><td>咨询 / 外脑</td><td>标准、安全等保</td><td>按需</td><td>等保测评、标准顾问</td></tr>
+</table>
+<div class="warn"><b>预算提示：</b>不要按"组件采购"估，应按"<b>系统建设 + 测评认证</b>"估。最大两块通常是人力与算力；CAE 授权与测评费相对可控但不可省。建议在 P0 完成详细预算分解表。</div>
+
+<h2>十一、合规认证路径</h2>
+<ol class="steps">
+  <li><b>设计对标：</b>全程按 GB/T 43441.1/.2、GB/T 45626-2025、GB/T 45873-2025 设计，条款清单化追踪。</li>
+  <li><b>验证留痕：</b>⑤模型验证体系持续产出标定/虚实对照文档，作为"高保真"可信证据。</li>
+  <li><b>自评：</b>P3 用 14 项成熟度 / 17 项可信性指标做内部自评，确定申报等级。</li>
+  <li><b>申报测评：</b>向中国电子技术标准化研究院（赛西 CESI）提交成熟度测试或可信性测评，获取等级证书。</li>
+  <li><b>安全合规：</b>同步完成等保测评与模型资产确权，满足 GB/T 43441.1 安全要求。</li>
+</ol>
+
+<h2>十二、成功度量（KPI）</h2>
+<div class="kpi">
+  <div class="box"><div class="num">5</div><div class="cap">五元构件全部上线</div></div>
+  <div class="box"><div class="num">4</div><div class="cap">保真维度达标</div></div>
+  <div class="box"><div class="num">2</div><div class="cap">标杆场景闭环（装备+工厂）</div></div>
+  <div class="box"><div class="num">≥II级</div><div class="cap">测评等级目标</div></div>
+</div>
+<p>贯穿指标：里程碑评审门 M1/M2 按期通过率、国标条款覆盖率（目标 100%）、验收基线达标率（目标 100%）、测评一次通过。</p>
+
+<h2>十三、给决策者的建议</h2>
+<p>方案已具备<b>技术可行、架构清晰、标准可对标、路径可执行</b>四个立项条件。建议<b>立即启动 P0</b>：用 1.5 个月锁定场景、保真等级与验收基线，完成选型清单与预算分解，把"高保真"从概念变成可签验收的合同条款。OGG 锁死保自主可控，Agent 解耦保灵活选优，<b>装备 CAE + 工厂级仿真</b>/数据底座/验证三块按计划补齐——按此节奏，18 个月内可交付一套覆盖"装备—车间—工厂"、<b>可认证的高保真智能数字孪生系统</b>。</p>
+
+<h2>附录A · 工厂级仿真数据需求表（P0 启动用）</h2>
+<p class="lead">工厂级仿真（对应 GB/T 45873 车间/工厂孪生）的数据底座需区分<b>两类场景</b>分别采集。下表为 P0 阶段应向业务方/工厂提出的数据收集清单，是 P1 数据底座规划与 P2 仿真建模的前置输入。</p>
+<table>
+  <tr><th style="width:15%">数据类别</th><th style="width:27%">① 新建工厂虚拟验证</th><th style="width:27%">② 存量工厂产能优化</th><th style="width:15%">来源 / 接口</th><th style="width:16%">规格与时点要求</th></tr>
+  <tr><td>几何与布局</td><td>厂房/产线布局图（CAD/IFC/BIM）：面积、柱距、物流通道、设备占位</td><td>现有布局 CAD + 实测工位坐标与通道实测</td><td>设计院 / 工厂工程部；② 现场实测</td><td>① 开工前设计文档（时点早、风险低）；② + 实测校准</td></tr>
+  <tr><td>工艺与产品</td><td>工艺流程图（PFD）、工序定义、装配层级</td><td>现行工艺路线 + 历史 BOM 与产品变型</td><td>工艺部门 / PLM</td><td>① 设计版；② 现行版 + 变型清单</td></tr>
+  <tr><td>节拍与周期</td><td>设计节拍 Takt / 目标 CT、工序时间标准</td><td>实测 CT、OEE、瓶颈工序历史（≥6–12 月）</td><td>② MES / SCADA</td><td>② 历史运行数据，需含异常与停机标注</td></tr>
+  <tr><td>设备与资源</td><td>设备选型参数（占地、节拍、可用率、故障率假设）</td><td>在用设备台账 + 实时状态 + 停机/故障记录</td><td>② 设备管理系统 / SCADA</td><td>② 台账 + 实时接口（停机需根因分类）</td></tr>
+  <tr><td>物流与仓储</td><td>物流路径设计、AGV/叉车策略、仓储与齐套策略</td><td>现有物流节拍、齐套率、在制品（WIP）水平</td><td>② WMS / MES</td><td>② 历史 + 实时，瓶颈工位需标注</td></tr>
+  <tr><td>生产与订单</td><td>目标产能 / 年产量、产品组合与混线比例</td><td>订单波动、排产约束、APS/MES 排程规则</td><td>② ERP / APS</td><td>② 历史 12 月 + 实时订单接口</td></tr>
+  <tr><td>仿真模型输入</td><td>布局/物流/排程假设参数集（可变更的"what-if"变量）</td><td>历史产能基线、瓶颈诊断结论（仿真校验基准）</td><td>仿真引擎输入</td><td>P2 建模前冻结版本，纳入配置管理</td></tr>
+</table>
+<p class="note">采集要点：<b>场景①</b>多为设计文档，开工前即可获取、风险低；<b>场景②</b>强依赖历史运行数据与 MES/ERP/SCADA 实时接口，数据<b>粒度与质量</b>是仿真可信度的关键（对应第九章"工厂级仿真数据粒度不足"风险），须在 P1 即规划采集链路与清洗规则。</p>
+
+<h2>附录B · 仿真引擎选型短名单对比（含国产替代）</h2>
+<h3>B.1 装备级 CAE（多物理场物理仿真 · 对应 GB/T 45626 仿真 6.1）</h3>
+<table>
+  <tr><th style="width:18%">名称</th><th style="width:13%">性质</th><th style="width:24%">强项</th><th style="width:13%">自主可控度</th><th>与 OGG 集成 / 备注</th></tr>
+  <tr><td>Simdroid（云道智造）</td><td>国产</td><td>结构/流体/电磁多物理场</td><td>中高</td><td>需验证几何接口；建议 OGG 几何导出 STEP → Simdroid 求解</td></tr>
+  <tr><td>中望 CAE</td><td>国产</td><td>结构/电磁</td><td>中高</td><td>与中望 CAD 协同，几何链路成熟</td></tr>
+  <tr><td>PERA SIM（安世亚太）</td><td>国产</td><td>结构/流体/电磁</td><td>中高</td><td>国产工业软件生态，适合自主可控主线</td></tr>
+  <tr><td>CalculiX</td><td>开源</td><td>结构有限元</td><td>高（代码可控）</td><td>无原生 GUI，需封装前后处理</td></tr>
+  <tr><td>Code_Aster</td><td>开源（法国）</td><td>结构/热</td><td>中（海外开源）</td><td>搭配 Salome-Meca 前后处理</td></tr>
+  <tr><td>OpenFOAM</td><td>开源</td><td>流体 CFD</td><td>高</td><td>需 HPC 资源，适合热流耦合</td></tr>
+  <tr><td>ANSYS / Abaqus</td><td>商业（国外）</td><td>功能最全、验证充分</td><td>低</td><td>作极端工况/对标备选，不主张主用</td></tr>
+</table>
+<h3>B.2 工厂级仿真引擎（离散事件 / 生产系统仿真 · 对应 GB/T 45873）</h3>
+<table>
+  <tr><th style="width:18%">名称</th><th style="width:13%">性质</th><th style="width:24%">强项</th><th style="width:13%">自主可控度</th><th>与数据底座集成 / 备注</th></tr>
+  <tr><td>Siemens Plant Simulation</td><td>商业（国外）</td><td>离散事件标杆，工厂/产线级布局物流</td><td>低</td><td>功能最成熟，建议作功能基线；可对接 MES</td></tr>
+  <tr><td>AnyLogic</td><td>商业（国外）</td><td>离散事件+系统动力学+Agent 多方法</td><td>低</td><td>复杂物流/供应链协同场景适配性强</td></tr>
+  <tr><td>FlexSim</td><td>商业（国外）</td><td>3D 离散事件，可视化强</td><td>低</td><td>适合方案汇报与布局评审</td></tr>
+  <tr><td>SimPy</td><td>开源（Python）</td><td>轻量离散事件建模</td><td>高</td><td>需自研 UI/接口，适合轻量自研路线</td></tr>
+  <tr><td>国产 MES 仿真模块</td><td>国产</td><td>轻量排程/产能仿真</td><td>中</td><td>与 MES 绑定，能力有限但可控</td></tr>
+</table>
+<div class="warn"><b>选型小结：</b>① <b>装备 CAE 国产替代已较成熟</b>（Simdroid / 中望 / PERA SIM 可为主力），自主可控主线清晰；② <b>工厂级离散事件仿真国产成熟商业引擎稀缺</b>，是当前自主可控的薄弱点。建议采用"<b>商业引擎保功能（Plant Simulation / AnyLogic）+ 同步评估国产 MES 仿真模块 + 长期基于 SimPy / 开源框架自研轻量引擎</b>"的三段路线，并把仿真引擎接口标准化（模型导入/结果导出契约），以便后续国产替代替换、避免锁定。</div>
+
+<h2>附录C · 工厂级仿真引擎 POC 验证大纲（P0 阶段 · 2–3 周）</h2>
+<p class="lead">本大纲支撑 P0 选型决策：在正式采购前，用最小成本验证 <b>Plant Simulation 与 AnyLogic</b>（附录B 候选短名单的商业主力）哪个更贴合本项目的"<b>新建厂验证 + 存量产能优化</b>"双场景，并初步判断国产替代（SimPy / 国产 MES 模块）的长期可行性。产出写入 P0《需求规格与标准符合性基线》的选型决策记录。</p>
+
+<h3>C.1 POC 范围与边界</h3>
+<div class="card">不做全厂建模，只做"<b>代表性切片</b>"：① 新建厂场景取一条代表性产线 / 一个车间做布局 + 物流验证；② 存量场景取当前瓶颈工段做产能爬坡 / 排程推演。周期 <b>2–3 周</b>、投入 <b>1 名仿真工程师 + 0.5 名数据工程师</b>。目标是验证"能力与贴合度"，非精度达标（精度在 P2 正式建模阶段用真实数据标定）。</div>
+
+<h3>C.2 评测维度与决策矩阵（示例分值，实测后重填）</h3>
+<table>
+  <tr><th style="width:30%">评测维度</th><th style="width:12%">权重</th><th style="width:24%">Plant Simulation</th><th style="width:24%">AnyLogic</th></tr>
+  <tr><td>离散事件建模成熟度</td><td>20%</td><td>5（离散事件标杆）</td><td>4</td></tr>
+  <tr><td>多方法 / 复杂物流适配（Agent / 系统动力学）</td><td>15%</td><td>3</td><td>5（多方法原生支持）</td></tr>
+  <tr><td>MES / ERP 数据接口能力（存量场景关键）</td><td>15%</td><td>4（西门子生态强）</td><td>4</td></tr>
+  <tr><td>3D 可视化与汇报友好度</td><td>10%</td><td>4</td><td>4</td></tr>
+  <tr><td>建模效率 / 学习曲线</td><td>10%</td><td>4</td><td>3</td></tr>
+  <tr><td>二次开发 / 接口开放性（为国产替代留退路）</td><td>15%</td><td>3</td><td>4（Java 生态开放）</td></tr>
+  <tr><td>成本可控性（授权模式）</td><td>10%</td><td>3</td><td>3</td></tr>
+  <tr><td colspan="4" style="background:#f1f5f9;color:#475569;font-size:13px;">注：自主可控不作为 POC 刻意追求项——Agent 层已采用通用 MAS 接口保障解耦，国产替代深度优化列为闭环后个性化迭代，不纳入 P0 验收与本次加权排序。</td></tr>
+  <tr><td><b>加权示例得分</b></td><td>100%</td><td><b>≈3.6</b></td><td><b>≈3.8</b></td></tr>
+</table>
+<p class="note">分值 1–5（5 最优），权重合计 100%。本表为示例框架，POC 实测后填入真实打分并排序。<b>自主可控不作为 POC 刻意追求项</b>：Agent 层已用通用 MAS 接口保障解耦，国产替代/深度自主可控列为闭环后的个性化迭代，不纳入 P0 验收与本次加权排序。</p>
+
+<h3>C.3 POC 任务分解（2–3 周节奏）</h3>
+<div class="steps">
+  <li><b>第 1 周 · 数据准备与环境搭建。</b>按附录A 取"<b>最小切片</b>"数据（样例 / 脱敏）；申请两引擎试用许可；搭建建模与数据对接环境。</li>
+  <li><b>第 2 周 · 场景①对比建模。</b>同一代表产线在两引擎各重建一遍，对比建模效率、布局瓶颈输出一致性、3D 可视化效果。</li>
+  <li><b>第 3 周 · 场景②对比建模 + 决策。</b>用存量瓶颈工段样例数据（含 MES 接口对接验证）做产能 / 排程推演；完成决策矩阵打分；输出《POC 验证报告》与选型建议（资源充足可压缩至 2 周）。</li>
+</div>
+
+<h3>C.4 验收 / 判定标准</h3>
+<table>
+  <tr><th style="width:30%">判定项</th><th>通过标准</th></tr>
+  <tr><td>场景①可达性</td><td>两引擎均能在 ≤X 人天内重建代表产线，布局瓶颈报告结论一致</td></tr>
+  <tr><td>场景②数据接口</td><td>能接入样例 MES 数据（CSV / API），输出产能 / 瓶颈对比，与历史基线偏差可接受</td></tr>
+  <tr><td>可视化与汇报</td><td>输出物可用于方案评审汇报（3D / 动态）</td></tr>
+  <tr><td>选型结论</td><td>按加权矩阵 + 国产替代可行性，给出首选推荐并写入 P0 基线</td></tr>
+</table>
+
+<h3>C.5 国产替代评估（闭环后个性化候选 · 非 POC 必做）</h3>
+<p>通用 MAS 接口已保障 Agent / 仿真引擎的解耦与可替换性。国产替代（SimPy 开源自研轻量引擎、国产 MES 仿真模块）<b>不列入 P0 / POC 必做项</b>，可作为系统闭环后的个性化迭代候选：待双场景跑通、接口契约稳定后，再评估用开源/国产引擎替换商业引擎的可行性，以平滑控制自主可控节奏、不影响主线交付。</p>
+
+<div class="warn"><b>POC 合规注意：</b>① 全程使用<b>脱敏 / 样例数据</b>，避免等保与数据不出域问题；② 商业引擎试用许可需在期限内完成验证；③ POC 目标为"验证能力与贴合度"而非精度达标，精度在 P2 正式建模阶段用真实数据标定。</div>
+
+<h3>参考来源</h3>
+<ul class="src">
+  <li>GB/T 43441.1-2023《信息技术 数字孪生 第1部分：通用要求》</li>
+  <li>GB/T 45626-2025《信息技术 装备数字孪生系统 通用要求》（2025-11-01 实施）</li>
+  <li>GB/T 45873-2025《信息技术 车间数字孪生 参考架构》</li>
+  <li>工信部、国家标准委《国家智能制造标准体系建设指南（2024版）》</li>
+  <li>中国电子技术标准化研究院（赛西）《数字孪生系统成熟度测试》《可信性测评方法》</li>
+  <li>华为 OGG / 华为云 IoT DTML / iMaster NCE 数字孪生引擎 / AI-Native 框架（公开资料）</li>
+  <li>本 workspace 论证报告《华为 OGG + Agent 数字孪生可行性及工信部高保真标准符合性分析》（2026-08-07）</li>
+</ul>
+
+<footer>
+本规划方案基于公开国家标准、华为官方公开资料及行业测评实践整理，供建设立项与执行管理参考。带"默认假设"者需在启动前与业务方确认；量化阈值为行业常用标尺，非国标强制数值，最终以官方标准版本与申报测评等级为准。
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能数字孪生系统 · P0–P3 全期执行总览</title>
+<style>
+  :root{ --blue:#2563eb; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --soft:#f8fafc; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:#fff; color:var(--ink);
+        font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif; font-size:13px; line-height:1.6; }
+  .wrap{ max-width:960px; margin:0 auto; padding:28px 32px 40px; }
+  header{ border-bottom:3px solid var(--blue); padding-bottom:14px; margin-bottom:18px; }
+  h1{ font-size:23px; margin:0 0 4px; letter-spacing:.5px; }
+  .sub{ color:var(--muted); font-size:12.5px; }
+  .meta{ margin-top:8px; font-size:11.5px; color:var(--muted); }
+  .meta b{ color:var(--ink); font-weight:600; }
+  h2{ font-size:15px; margin:24px 0 10px; padding-left:9px; border-left:4px solid var(--blue); }
+  p.lead{ margin:8px 0 0; color:#374151; }
+  /* 架构 */
+  .arch{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+  .layer{ border:1px solid var(--line); border-radius:8px; padding:9px 10px; background:var(--soft); }
+  .layer .n{ font-size:10.5px; color:var(--blue); font-weight:700; }
+  .layer .t{ font-weight:600; font-size:12.5px; margin:2px 0 3px; }
+  .layer .d{ font-size:11px; color:var(--muted); }
+  .lock{ display:inline-block; font-size:10px; padding:1px 5px; border-radius:4px; margin-top:4px; }
+  .lock.y{ background:#fee2e2; color:#b91c1c; }
+  .lock.n{ background:#dcfce7; color:#15803d; }
+  /* 表格 */
+  table{ width:100%; border-collapse:collapse; font-size:12px; }
+  th,td{ border:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top; }
+  th{ background:var(--blue); color:#fff; font-weight:600; }
+  tbody tr:nth-child(even){ background:var(--soft); }
+  td .k{ font-weight:600; }
+  .badge{ display:inline-block; font-size:10.5px; padding:1px 7px; border-radius:10px; background:#eff6ff; color:var(--blue); border:1px solid #bfdbfe; white-space:nowrap; }
+  /* 基线大数字 */
+  .kpis{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:6px; }
+  .kpi{ border:1px solid var(--line); border-radius:10px; padding:14px 16px; text-align:center; background:#fff; }
+  .kpi .big{ font-size:26px; font-weight:800; color:var(--blue); line-height:1.1; }
+  .kpi .lab{ font-size:11.5px; color:var(--muted); margin-top:4px; }
+  .note{ font-size:11px; color:var(--muted); margin-top:6px; }
+  /* 标准卡 */
+  .std{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+  .card{ border:1px solid var(--line); border-radius:8px; padding:9px 11px; }
+  .card .code{ font-weight:700; color:var(--blue); font-size:12px; }
+  .card .nm{ font-size:11.5px; color:#374151; margin-top:2px; }
+  footer{ margin-top:26px; border-top:1px solid var(--line); padding-top:12px; font-size:11px; color:var(--muted); }
+  @media print{ body{ font-size:11.5px; } .wrap{ padding:12px 16px; } h2{ page-break-after:avoid; } table,tr{ page-break-inside:avoid; } .arch,.kpis,.std{ page-break-inside:avoid; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>智能数字孪生系统 · P0–P3 全期执行总览</h1>
+    <div class="sub">华为 OGG 几何内核（锁定） + 厂商无关 Agent（通用 MAS 接口） · 无云私有化可行 · 降依赖 Demo 优先</div>
+    <div class="meta">版本 <b>v1.0</b> ｜ 编制 <b>工业5点0产业生态联盟 · 杜玉河</b> ｜ 日期 <b>2026-08-13</b> ｜ 覆盖 <b>立项 → 结项全周期（约 18 个月）</b></div>
+  </header>
+
+  <p class="lead">本总览把已交付的 P0–P3 五期执行包收敛为一页：五元架构、四期路线图、量化验收基线、国标符合性地图、降依赖 Demo 路径与交付物清单，供立项汇报与阶段衔接快速对齐。所有数值为<b>行业标尺与规划基线</b>，非国标强制阈值；正式合规走 CESI 测评取证。</p>
+
+  <h2>一、五元分层架构（锁定 + 解耦）</h2>
+  <div class="arch">
+    <div class="layer"><div class="n">① 几何保真层</div><div class="t">OGG / OCCT</div><div class="d">开源几何内核，建模与几何精度底座</div><span class="lock y">锁定</span></div>
+    <div class="layer"><div class="n">② 智能保真层</div><div class="t">解耦 Agent</div><div class="d">通用 MAS 接口 + 国产 LLM / 开源框架</div><span class="lock n">厂商无关</span></div>
+    <div class="layer"><div class="n">③ 仿真保真层</div><div class="t">CAE + 工厂级</div><div class="d">装备物理场 + 离散事件（新建/存量双场景）</div><span class="lock n">自主选型</span></div>
+    <div class="layer"><div class="n">④ 实时数据底座</div><div class="t">同步 / 时序</div><div class="d">EMQX+IoTDB / OPC UA 直采，无云可私有化</div><span class="lock n">自主选型</span></div>
+    <div class="layer"><div class="n">⑤ 模型验证体系</div><div class="t">虚实对照</div><div class="d">标定–对照–验证，支撑高保真可信闭环</div><span class="lock n">待建</span></div>
+  </div>
+
+  <h2>二、四期路线图（P0 → P3）</h2>
+  <table>
+    <thead><tr><th style="width:64px">期次</th><th style="width:78px">周期</th><th>目标</th><th>关键交付物</th><th style="width:84px">评审门</th><th style="width:96px">状态</th></tr></thead>
+    <tbody>
+      <tr><td><span class="k">P0</span></td><td>≈1.5 月</td><td>可行性论证、总体规划、需求规格与标准基线、评审拍板</td><td>论证分析(v2·解耦) ／ 规划方案 v1.5(附A/B/C) ／ P0基线文档 ／ P0评审材料+PPTX</td><td>M0 评审通过</td><td><span class="badge">评审材料齐备</span></td></tr>
+      <tr><td><span class="k">P1</span></td><td>第1–6月</td><td>从纸面到孪生：OGG 部署打通 + 数据底座选型落地</td><td>P1启动包 ／ 零依赖 Demo 原型（真OCCT·SQLite数据·规则智能·SimPy工厂级）</td><td>M1 几何≤0.5mm·同步≤200ms</td><td><span class="badge">启动包+Demo就绪</span></td></tr>
+      <tr><td><span class="k">P2</span></td><td>第7–12月</td><td>仿真保真 + 智能层集成：装备CAE、工厂级双场景、解耦 Agent</td><td>P2启动包（构件C/D/E：CAE·工厂级仿真·通用MAS+Ollama本地LLM）</td><td>M2 仿真≤±0.5%·工厂级验收阈值</td><td><span class="badge">启动包就绪</span></td></tr>
+      <tr><td><span class="k">P3</span></td><td>第13–17.5月</td><td>五元集成 + 模型验证体系 + CESI 测评取证结项</td><td>P3启动包（构件F验证体系·集成契约·CESI路径·M3结项门）</td><td>M3 结项（测评证书）</td><td><span class="badge">启动包就绪</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2>三、量化验收基线（行业标尺，非强制）</h2>
+  <div class="kpis">
+    <div class="kpi"><div class="big">≤0.5mm</div><div class="lab">几何建模误差</div></div>
+    <div class="kpi"><div class="big">≤±0.5%</div><div class="lab">仿真计算误差</div></div>
+    <div class="kpi"><div class="big">≤200ms</div><div class="lab">虚实同步延迟</div></div>
+  </div>
+  <div class="note">注：三项为行业通行标尺，用于内部验收与方案对标；最终合规以 GB/T 45626 / 45873 实测 + CESI 成熟度（14 项）/可信性（17 项）测评结论为准。</div>
+
+  <h2>四、标准符合性地图</h2>
+  <div class="std">
+    <div class="card"><div class="code">GB/T 43441.1-2023</div><div class="nm">智能制造 数字孪生 通用要求（参考架构 / 术语）</div></div>
+    <div class="card"><div class="code">GB/T 43441.2-2026</div><div class="nm">数字孪生车间（车间级要求）</div></div>
+    <div class="card"><div class="code">GB/T 45626-2025</div><div class="nm">装备数字孪生（几何/仿真/同步/验证/故障诊断/状态预测）</div></div>
+    <div class="card"><div class="code">GB/T 45873-2025</div><div class="nm">车间 / 工厂数字孪生（布局/物流/产能/排程）</div></div>
+  </div>
+
+  <h2>五、降依赖 Demo 路径（换引擎不换骨架）</h2>
+  <table>
+    <thead><tr><th style="width:96px">架构层</th><th>Demo 轻量占位（零依赖）</th><th>正式构件</th><th style="width:70px">替换周次</th></tr></thead>
+    <tbody>
+      <tr><td><span class="k">几何保真</span></td><td>numpy/plotly 几何体 → pythonocc-core 真 OCCT</td><td>OGG / OCCT 编译内核</td><td>W1</td></tr>
+      <tr><td><span class="k">实时数据</span></td><td>Python 队列 + SQLite 时序（DataBusLite≈EMQX / TsStore≈IoTDB）</td><td>EMQX+IoTDB / OPC UA 直采</td><td>W1</td></tr>
+      <tr><td><span class="k">智能保真</span></td><td>规则引擎 → 通用 MAS + Ollama 本地 LLM</td><td>通用 MAS 接口 + 国产 LLM</td><td>W4</td></tr>
+      <tr><td><span class="k">工厂级仿真</span></td><td>SimPy 零依赖离散事件（新建厂验证 + 存量产能优化）</td><td>Plant Simulation / AnyLogic / 国产 MES 模块</td><td>W2</td></tr>
+    </tbody>
+  </table>
+
+  <h2>六、当前交付物清单（执行包已就位）</h2>
+  <table>
+    <thead><tr><th style="width:30px">#</th><th>交付物</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>华为OGG_Agent数字孪生论证分析.html（v2·解耦）</td><td>可行性 + 解耦 Agent 结论 + 国标符合性</td></tr>
+      <tr><td>2</td><td>智能数字孪生系统建设规划方案.html（v1.5）</td><td>13 章 + 附录 A 数据需求 / B 引擎选型 / C POC 大纲</td></tr>
+      <tr><td>3</td><td>P0需求规格与标准符合性基线.html + P0评审材料 + P0评审汇报.pptx</td><td>可签基线 + 评审投屏 + 可编辑幻灯片</td></tr>
+      <tr><td>4</td><td>P1启动包_几何内核与数据底座打通.html + P1零依赖Demo原型</td><td>开工计划 + 可运行 Demo（几何/数据/智能/工厂级）</td></tr>
+      <tr><td>5</td><td>P2启动包_仿真保真与智能层集成.html</td><td>仿真 + 解耦 Agent 集成计划</td></tr>
+      <tr><td>6</td><td>P3启动包_系统集成与测评取证.html</td><td>五元集成 + 模型验证 + CESI 取证</td></tr>
+    </tbody>
+  </table>
+
+  <footer>
+    本总览为项目执行视角的一页式索引，详细内容见各期独立文档。关键事实已校正：OGG 许可为 <b>LGPL 2.1</b>（非 BSD）、仓库在 <b>Gitee</b>（非 GitHub），源码 clone 无审批；部署支持<b>无云私有化</b>。Demo 数值为概念验证占位，不构成合规证据；正式合规须走 CESI 测评。
+  </footer>
+
+</div>
+</body>
+</html>
