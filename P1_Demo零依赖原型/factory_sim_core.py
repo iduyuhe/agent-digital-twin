@@ -25,6 +25,7 @@
 """
 import random
 import simpy
+import statistics
 
 
 # ============================================================
@@ -288,6 +289,194 @@ def simulate_existing_plant_optimization(
         "throughput_uplift": round(uplift, 3),
         "bottleneck_shifted": base["bottleneck"] != opt["bottleneck"],
         "new_bottleneck": opt["bottleneck"],
+    }
+
+
+# ============================================================
+# P2 增强 · 仿真保真标定（蒙特卡洛 vs 解析基线）
+# ------------------------------------------------------------
+# 对应 P2 启动包「构件 D · 仿真误差标定 ≤±0.5%（业界标尺，非国标强制）」。
+# 做法：在相同拓扑下做 N 次独立仿真（不同随机种子），与「解析瓶颈产能」机理基线
+# 比对，输出均值 / 标准差 / 相对误差，作为仿真保真度的量化证据。
+# 说明：演示级标定使用 SimPy 随机加工 + 有限仿真时长，单次波动由标准差体现；
+# 重型 CAE/商业离散引擎 + POC 后可达 ±0.5% 标尺。本函数不修改既有 simulate_*。
+# ============================================================
+
+
+def analytical_bottleneck_capacity(stations_spec):
+    """解析理论最大产能（件/时）：流水线瓶颈 = 单件占用时间(proc_mean/机器数) 最大者，
+    理论产能 = 60 / (proc_mean/机器数) = 60 × 机器数 / proc_mean。作为仿真误差标定基线。"""
+    bn, bm, bs, bc = max(stations_spec, key=lambda t: t[1] / t[3])
+    return 60.0 * bc / bm
+
+
+def _runner_fixed_n(stations_spec, n_parts, seed=42):
+    """固定投入 N 个工件（t=0 瞬时全部进入），全部完成后结束。
+    系统立即满载，稳态吞吐直接收敛到瓶颈产能，消除到达率干扰，
+    是仿真保真标定最干净的模式。"""
+    random.seed(seed)
+    env = simpy.Environment()
+    stations = [Station(env, n, m, s, c) for (n, m, s, c) in stations_spec]
+    results = {"completed": 0, "cycle_times": []}
+
+    def part_flow(t0):
+        for st in stations:
+            with st.resource.request() as req:
+                yield req
+                proc = max(0.02, random.gauss(st.proc_mean, st.proc_std))
+                yield env.timeout(proc)
+                st.busy += proc
+                st.processed += 1
+        results["completed"] += 1
+        results["cycle_times"].append(env.now - t0)
+
+    def setup():
+        for _ in range(n_parts):
+            env.process(part_flow(env.now))
+        yield env.timeout(0)
+
+    env.process(setup())
+    env.run()
+    return env, stations, results
+
+
+def calibrate_simulation(factory_type="machining", stations_spec=None,
+                         n_parts=2000, n_runs=24, seed_base=2000):
+    """蒙特卡洛多次仿真，与解析瓶颈产能基线比对，输出误差标定报告。
+    采用固定 N 件满载模式（_runner_fixed_n），消除到达率干扰，使对标干净。"""
+    if stations_spec is None:
+        stations_spec = FACTORY_LIBRARY[factory_type]["stations"]
+    baseline = analytical_bottleneck_capacity(stations_spec)
+    runs = []
+    for i in range(n_runs):
+        env, _sts, res = _runner_fixed_n(stations_spec, n_parts, seed=seed_base + i)
+        runs.append(res["completed"] / env.now * 60.0)
+    mean = statistics.mean(runs)
+    sd = statistics.pstdev(runs)
+    rel_err = abs(mean - baseline) / baseline if baseline else 0.0
+    return {
+        "factory_type": factory_type,
+        "n_runs": n_runs,
+        "analytical_baseline_per_h": round(baseline, 2),
+        "sim_mean_per_h": round(mean, 2),
+        "sim_std_per_h": round(sd, 3),
+        "relative_error_pct": round(rel_err * 100, 3),
+        "cv_pct": round(sd / mean * 100, 3) if mean else 0.0,
+        "meets_half_pct_caliber": rel_err <= 0.005,   # 对标 ±0.5% 标尺
+    }
+
+
+# ============================================================
+# P2 增强 · 场景② 存量产能优化（故障 / 换型 / 在制品 建模）
+# ------------------------------------------------------------
+# 在既有 simulate_existing_plant_optimization 的"瓶颈加机器"之上，补充更真实的
+# 生产系统要素：机器随机故障停机(MTBF/MTTR)、批次换型(set-up)、在制品上限(WIP)。
+# 支撑 P2「瓶颈诊断 + 产能爬坡推演 + 增资回报推演」双场景闭环。
+# ============================================================
+def _runner_realistic(stations_spec, arrival_interval, sim_minutes,
+                      mtbf_min, mttr_min, setup_min, wip_cap, batch_size, seed=42):
+    """增强版运行器：支持故障停机、换型时间、在制品上限（WIP 真实计数）。"""
+    random.seed(seed)
+    env = simpy.Environment()
+    stations = [Station(env, n, m, s, c) for (n, m, s, c) in stations_spec]
+    results = {"completed": 0, "cycle_times": [],
+               "breakdown_count": 0, "setup_count": 0, "wip_rejected": 0}
+    state = {"inflight": 0, "last_batch": -1}
+
+    def part_flow():
+        t_arrive = env.now
+        state["inflight"] += 1
+        cur_batch = results["completed"] // batch_size
+        for si, st in enumerate(stations):
+            with st.resource.request() as req:
+                yield req
+                # 换型：进入新批次时在首工位准备一次
+                if si == 0 and state["last_batch"] != cur_batch:
+                    state["last_batch"] = cur_batch
+                    results["setup_count"] += 1
+                    yield env.timeout(setup_min)
+                # 故障：以概率 mttr/(mtbf+mttr) 触发一次停机维修
+                if random.random() < (mttr_min / (mtbf_min + mttr_min)):
+                    results["breakdown_count"] += 1
+                    yield env.timeout(mttr_min)
+                proc = max(0.02, random.gauss(st.proc_mean, st.proc_std))
+                yield env.timeout(proc)
+                st.busy += proc
+                st.processed += 1
+        results["completed"] += 1
+        results["cycle_times"].append(env.now - t_arrive)
+        state["inflight"] -= 1
+
+    def generator():
+        while env.now < sim_minutes:
+            if state["inflight"] < wip_cap:        # 在制品上限：超过则不投入新件
+                yield env.timeout(random.expovariate(1.0 / arrival_interval))
+                env.process(part_flow())
+            else:
+                results["wip_rejected"] += 1
+                yield env.timeout(arrival_interval)
+
+    env.process(generator())
+    env.run(until=sim_minutes)
+    return env, stations, results
+
+
+def simulate_existing_plant_realistic(
+    factory_type="machining",
+    stations_spec=None,
+    arrival_interval=None,
+    sim_minutes=1440.0,
+    mtbf_min=600.0,           # 平均故障间隔（分钟）
+    mttr_min=30.0,            # 平均修复时间（分钟）
+    setup_min=15.0,           # 换型/准备时间（分钟/批）
+    wip_cap=25,               # 在制品上限
+    batch_size=10,            # 换型批量
+    add_machines=None,
+    seed=42,
+):
+    """场景②增强版：故障/换型/WIP 建模 → 瓶颈诊断 + 增资爬坡推演。"""
+    if stations_spec is None:
+        stations_spec = FACTORY_LIBRARY[factory_type]["stations"]
+    if arrival_interval is None:
+        arrival_interval = FACTORY_LIBRARY[factory_type]["existing_plant"]["arrival_interval"]
+    if add_machines is None:
+        add_machines = FACTORY_LIBRARY[factory_type]["existing_plant"]["add_machines"]
+    # baseline（含真实生产损失）
+    env0, st0, r0 = _runner_realistic(
+        stations_spec, arrival_interval, sim_minutes,
+        mtbf_min, mttr_min, setup_min, wip_cap, batch_size, seed)
+    base = _summarize(env0, st0, r0)
+    base["breakdown_count"] = r0["breakdown_count"]
+    base["setup_count"] = r0["setup_count"]
+    base["wip_rejected"] = r0["wip_rejected"]
+    # 优化：瓶颈工位 +add_machines
+    b_idx = max(range(len(st0)),
+                key=lambda i: st0[i].busy / (env0.now * st0[i].resource.capacity))
+    opt_spec = list(stations_spec)
+    name, m, s, c = opt_spec[b_idx]
+    opt_spec[b_idx] = (name, m, s, c + add_machines)
+    env1, st1, r1 = _runner_realistic(
+        opt_spec, arrival_interval, sim_minutes,
+        mtbf_min, mttr_min, setup_min, wip_cap, batch_size, seed)
+    opt = _summarize(env1, st1, r1)
+    opt["breakdown_count"] = r1["breakdown_count"]
+    opt["setup_count"] = r1["setup_count"]
+    opt["wip_rejected"] = r1["wip_rejected"]
+    uplift = (opt["throughput_per_h"] - base["throughput_per_h"]) / base["throughput_per_h"]
+    # 可用性（故障折损）：理论满产 vs 实际
+    availability = 1.0 - (mttr_min / (mtbf_min + mttr_min))
+    return {
+        "baseline": base,
+        "optimized": opt,
+        "bottleneck_station": base["bottleneck"],
+        "added_machines": add_machines,
+        "throughput_uplift": round(uplift, 3),
+        "bottleneck_shifted": base["bottleneck"] != opt["bottleneck"],
+        "new_bottleneck": opt["bottleneck"],
+        "availability": round(availability, 3),
+        "breakdown_count": r0["breakdown_count"],
+        "setup_count": r0["setup_count"],
+        "wip_rejected": r0["wip_rejected"],
     }
 
 

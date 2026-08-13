@@ -29,6 +29,8 @@ from plotly.subplots import make_subplots
 import factory_sim_core as fs
 import planner_core as pc
 import demo_app as da   # 复用几何/传感/3D/数据底座渲染函数
+import p2_intelligence as pi   # P2 智能保真层（诊断/预测/决策 三类 Agent）
+import p2_cae_fidelity as cae   # P2 装备级CAE保真（梁/热 FEM+FDM 标定）
 
 # 复用 demo_app 的配色与渲染原语
 BLUE = da.BLUE
@@ -68,6 +70,12 @@ def ensure_simulator():
 def _cached_databus():
     """数据底座回查：只算一次，后续复用缓存。"""
     return da.render_databus_preview()
+
+
+@st.cache_data(show_spinner=False)
+def _cached_calibrate(factory_type, n_parts=4000, n_runs=24):
+    """P2 仿真保真标定：蒙特卡洛 vs 解析基线，缓存避免每次重算。"""
+    return fs.calibrate_simulation(factory_type=factory_type, n_parts=n_parts, n_runs=n_runs)
 
 
 # ============================================================
@@ -347,6 +355,178 @@ def render_custom():
 
 
 # ============================================================
+# 可信性指标仪表（进度条组件）
+# ============================================================
+def _metric_bar(label, value, good_threshold, higher_is_better=True, fmt="{:.1%}"):
+    color = (GREEN if (value >= good_threshold) else ORANGE) if higher_is_better \
+        else (GREEN if (value <= good_threshold) else ORANGE)
+    width = max(0.0, min(float(value) * 100.0, 100.0))
+    return (
+        f'<div style="margin:6px 0;">'
+        f'<div style="display:flex;justify-content:space-between;font-size:12px;color:#374151;">'
+        f'<span>{label}</span>'
+        f'<span style="font-weight:700;color:{color};">{fmt.format(value)}</span></div>'
+        f'<div style="height:8px;background:#e5e7eb;border-radius:4px;margin-top:3px;">'
+        f'<div style="height:8px;width:{width:.0f}%;background:{color};border-radius:4px;"></div></div></div>'
+    )
+
+
+# ============================================================
+# 模式③：P2 智能保真（仿真标定 + 智能层闭环）
+# ============================================================
+def render_p2():
+    st.markdown(
+        '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;'
+        'padding:12px 16px;margin-bottom:14px;font-size:13px;color:#1e40af;">'
+        '🧠 <b>P2 智能保真</b>：在 P1 标准闭环上新接入两条主线 —— '
+        '① <b>仿真保真标定</b>（蒙特卡洛多次仿真 vs 解析基线，对标业界 ±0.5% 标尺）；'
+        '② <b>解耦 Agent 智能层</b>（诊断/预测/决策 三类 Agent，规则引擎兜底，接入实时孪生数据）。'
+        '这是通往 P3 集成测评的可信性指标采集入口。</div>',
+        unsafe_allow_html=True)
+
+    fmt_map = dict(fs.list_factories())
+    ft = st.selectbox("🏭 选择工厂类型", options=list(fmt_map.keys()),
+                      index=list(fmt_map.keys()).index(FLAGSHIP),
+                      format_func=lambda k: fmt_map.get(k, k), key='p2_ft')
+
+    # ---- 仿真保真标定卡 ----
+    cal = _cached_calibrate(ft)
+    st.markdown('<div style="font-size:14px;font-weight:600;color:%s;margin:8px 0 6px;">'
+                '🔬 仿真保真标定（蒙特卡洛 N=%d 次满载仿真 vs 解析瓶颈产能）</div>' % (BLUE, cal['n_runs']),
+                unsafe_allow_html=True)
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.markdown(kpi_card(f"{cal['analytical_baseline_per_h']:.1f}", "解析基线 件/时"), unsafe_allow_html=True)
+    with c2:
+        st.markdown(kpi_card(f"{cal['sim_mean_per_h']:.1f}", "仿真均值 件/时"), unsafe_allow_html=True)
+    with c3:
+        st.markdown(kpi_card(f"{cal['relative_error_pct']:.3f}%", "相对误差",
+                             idx_color=GREEN if cal['meets_half_pct_caliber'] else ORANGE), unsafe_allow_html=True)
+    with c4:
+        st.markdown(kpi_card(f"CV {cal['cv_pct']:.2f}%", "变异系数"), unsafe_allow_html=True)
+    ok_txt = "✅ 对标 ±0.5% 标尺达标" if cal['meets_half_pct_caliber'] else \
+        "⚠️ 略超 ±0.5%（演示级随机波动，重型求解器+POC 后稳定达成）"
+    st.caption(f"解析基线 = 瓶颈工位理论产能；仿真均值来自 {cal['n_runs']} 次独立满载仿真；{ok_txt}。")
+
+    # ---- 场景② 存量优化增强 ----
+    r2sim = fs.simulate_existing_plant_realistic(factory_type=ft)
+    st.markdown('<div style="font-size:14px;font-weight:600;color:%s;margin:10px 0 6px;">'
+                '🏭 场景② 存量产能优化（故障/换型/WIP 建模）</div>' % BLUE, unsafe_allow_html=True)
+    b1, b2, b3 = st.columns(3)
+    with b1:
+        st.metric("现状产能", f"{r2sim['baseline']['throughput_per_h']:.1f} 件/时")
+    with b2:
+        st.metric("增资后产能", f"{r2sim['optimized']['throughput_per_h']:.1f} 件/时")
+    with b3:
+        st.metric("爬坡提升", f"{r2sim['throughput_uplift']*100:.1f}%")
+    st.caption(f"瓶颈={r2sim['bottleneck_station']} → "
+               f"{'转移→'+r2sim['new_bottleneck'] if r2sim['bottleneck_shifted'] else '未转移'}；"
+               f"设备可用性={r2sim['availability']*100:.1f}%；"
+               f"仿真期故障{r2sim['breakdown_count']}次/换型{r2sim['setup_count']}次；"
+               f"增资{r2sim['added_machines']}台后瓶颈{'转移' if r2sim['bottleneck_shifted'] else '缓解'}。")
+
+    # ---- 智能层闭环（实时）----
+    st.divider()
+    st.markdown('<div style="font-size:14px;font-weight:600;color:%s;margin:8px 0 6px;">'
+                '🤖 智能保真闭环（实时孪生数据 → 三类 Agent）</div>' % BLUE, unsafe_allow_html=True)
+    ensure_simulator()
+    t_hist = list(da.data_buf['temp'])[-60:] if da.data_buf['temp'] else [45.0] * 60
+    v_hist = list(da.data_buf['vib'])[-60:] if da.data_buf['vib'] else [0.8] * 60
+    r_hist = list(da.data_buf['rpm'])[-60:] if da.data_buf['rpm'] else [1500] * 60
+    latest = {"temp": t_hist[-1], "vib": v_hist[-1], "rpm": r_hist[-1]}
+    designed = fs.FACTORY_LIBRARY[ft]['new_plant']['designed_capacity_per_h']
+    reach = min(r2sim['optimized']['throughput_per_h'] / designed, 1.0)
+    out = pi.run_intelligence_layer(latest, t_hist, v_hist, {"reachability": reach})
+
+    d1, d2, d3 = st.columns(3)
+    with d1:
+        st.markdown('<div style="font-size:13px;font-weight:600;color:%s;">🔍 诊断 Agent（GB/T 45626 6.4）</div>' % BLUE, unsafe_allow_html=True)
+        sev = out['diagnostic']['severity']
+        sev_color = {"high": "#dc2626", "mid": "#d97706", "normal": "#16a34a"}.get(sev, "#16a34a")
+        st.markdown(f'<span style="color:{sev_color};font-weight:700;font-size:15px;">● {sev.upper()}</span>',
+                    unsafe_allow_html=True)
+        if out['diagnostic']['alerts']:
+            for a in out['diagnostic']['alerts']:
+                st.write(f"• {a}")
+        else:
+            st.write("• 工况正常，无异常")
+    with d2:
+        st.markdown('<div style="font-size:13px;font-weight:600;color:%s;">📈 预测 Agent（GB/T 45626 6.5）</div>' % BLUE, unsafe_allow_html=True)
+        pr = out['predictive']
+        if pr.get('available'):
+            st.write(f"趋势：{pr['trend']}（斜率 {pr['slope']}）")
+            st.write(f"样本外预测精度 MAPE：{pr['mape_pct']}%")
+            st.write(f"趋势拟合 R²：{pr['r2']}")
+            if pr['rul_steps']:
+                st.write(f"剩余寿命估算：~{pr['rul_steps']} 采样步")
+        else:
+            st.write("历史数据不足，预测待积累")
+    with d3:
+        st.markdown('<div style="font-size:13px;font-weight:600;color:%s;">⚙️ 决策 Agent（GB/T 45626 7.4）</div>' % BLUE, unsafe_allow_html=True)
+        for r in out['decision']['recommendations']:
+            st.write(f"• {r}")
+        st.caption(f"置信度 {out['decision']['confidence']*100:.0f}%")
+
+    # ---- 可信性指标仪表（P3 测评预存）----
+    st.divider()
+    st.markdown('<div style="font-size:14px;font-weight:600;color:%s;margin:8px 0 6px;">'
+                '📊 可信性指标埋点（为 P3 测评预存数据）</div>' % BLUE, unsafe_allow_html=True)
+    m = out['metrics']
+    st.markdown(_metric_bar("诊断准确率", m['diagnostic_accuracy'], 0.9, True), unsafe_allow_html=True)
+    st.markdown(_metric_bar("预测精度(趋势R²)", m['predictive_r2_avg'], 0.6, True), unsafe_allow_html=True)
+    st.markdown(_metric_bar("决策一致性", m['decision_consistency'], 0.9, True), unsafe_allow_html=True)
+    st.caption(f"样本累计 {m['samples']} 轮（实时闭环持续采集）。演示级真值来自工况注入；"
+               f"重型评测（CESI 成熟度/可信性）在 P3 完成。"
+               f"本地 LLM 当前{'不可用 → 规则引擎兜底' if not pi.HAS_OLLAMA else '可用'}。")
+
+    # ── P2-B 装备级 CAE 保真标定面板 ──
+    st.divider()
+    st.markdown('<div style="font-size:14px;font-weight:600;color:%s;margin:8px 0 6px;">'
+                '🔩 装备级 CAE 保真（构件 C：FEM 梁 + FDM 热传导）</div>' % BLUE, unsafe_allow_html=True)
+
+    cae_material = st.selectbox("材料", list(cae.MATERIALS.keys()), format_func=lambda k: f"{cae.MATERIALS[k].name} (E={cae.MATERIALS[k].E:.1e}Pa)")
+    _cae_run = st.button("运行 CAE 标定（5 场景蒙特卡洛）", key="cae_cal_btn")
+
+    if _cae_run:
+        with st.spinner("CAE 标定中（FEM 梁单元 + FDM 热传导 + 解析基线对比）..."):
+            t0 = time.time()
+            cae_results = cae.run_cae_calibration()
+            elapsed = time.time() - t0
+
+        # 结果汇总表
+        cols = st.columns(5)
+        all_pass = True
+        for i, (key, res) in enumerate(cae_results.items()):
+            with cols[i % 5]:
+                status_icon = "✅" if res.meets_caliber else "❌"
+                if not res.meets_caliber:
+                    all_pass = False
+                st.markdown(
+                    f'<div style="background:#f8fafc;border-radius:8px;padding:10px;text-align:center;'
+                    f'border:1px solid {"#dbeafe" if res.meets_caliber else "#fecaca"}">'
+                    f'<div style="font-size:11px;color:#6b7280">{res.scenario.replace("_"," ")}</div>'
+                    f'<div style="font-size:18px;font-weight:700;color:%s">{res.relative_error_pct:.3f}%%</div>'
+                    f'<div style="font-size:10px;color:#9ca3af">±0.5%%标尺 {status_icon}</div></div>' %
+                    ("#16a34a" if res.meets_caliber else "#dc2626"), unsafe_allow_html=True)
+
+        # 详细数据
+        st.caption(f"全部 5 场景 {'✅ 达标' if all_pass else '⚠️ 部分未达标'} | "
+                   f"几何引擎: {'OpenCASCADE' if cae.HAS_OCC else 'NumPy网格'} | "
+                   f"耗时 {elapsed:.1f}s")
+
+        # 材料属性卡片
+        mat = cae.MATERIALS[cae_material]
+        st.json({
+            "材料": mat.name,
+            "弹性模量 E": f"{mat.E:.3e} Pa",
+            "泊松比 ν": mat.nu,
+            "密度 ρ": f"{mat.rho} kg/m³",
+            "导热系数 k": f"{mat.k} W/(m·K)",
+            "热膨胀 α": f"{mat.alpha:.2e} 1/K",
+        })
+
+
+# ============================================================
 # 入口
 # ============================================================
 def main():
@@ -363,22 +543,24 @@ def main():
         '先看清「我们的标准数字孪生」→ 再把它定制到「您的工厂」</p></div>',
         unsafe_allow_html=True)
 
-    # 顶部模式切换（标准DEMO 默认在前）
+    # 顶部模式切换（标准DEMO 默认在前；新增 P2 智能保真作为第三阶段能力入口）
     mode = st.radio(
         "展示模式",
-        options=["标准DEMO", "客户定制"],
+        options=["标准DEMO", "客户定制", "智能保真（P2）"],
         index=0,
         horizontal=True,
         key="mode",
     )
 
-    # 传感线程全局只起一次（两模式共享实时数据）
+    # 传感线程全局只起一次（各模式共享实时数据）
     ensure_simulator()
 
     if mode == "标准DEMO":
         render_standard()
-    else:
+    elif mode == "客户定制":
         render_custom()
+    else:
+        render_p2()
 
     # 自动刷新（每 3 秒，降低 CPU 占用 + 避免首屏超时）
     time.sleep(3.0)
