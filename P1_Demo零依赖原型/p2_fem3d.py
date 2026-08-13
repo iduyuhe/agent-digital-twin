@@ -24,13 +24,14 @@ P2 仿真保真层 · 3D 实体有限元求解器（构件 C-3D）
 """
 from __future__ import annotations
 
+import math
 import time
 from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 
 import numpy as np
 from scipy.sparse import coo_matrix
-from scipy.sparse.linalg import spsolve
+from scipy.sparse.linalg import spsolve, eigsh, splu
 
 # 复用 P2 标定结果数据结构与材料库（单向导入，避免循环依赖）
 from p2_cae_fidelity import CalibrationResult, MATERIALS  # noqa: E402
@@ -407,10 +408,12 @@ def calibrate_3d_tension(material_key: str = "steel",
 
 
 def run_fem3d_calibration(material_key: str = "steel") -> Dict[str, CalibrationResult]:
-    """执行 3D 实体有限元全部标定场景。"""
+    """执行 3D 实体有限元全部标定场景（静力 2 + 动力学 2 = 4）。"""
     results = {}
     results["beam_3d_tension_hex20"] = calibrate_3d_tension(material_key)
     results["beam_3d_cantilever_hex20"] = calibrate_3d_cantilever(material_key)
+    results["beam_3d_modal_hex20"] = calibrate_3d_modal(material_key)
+    results["beam_3d_transient_hex20"] = calibrate_3d_transient(material_key)
     return results
 
 
@@ -470,6 +473,248 @@ def deformed_mesh_plotly(L, b, h, E, nu, P, nx=12, ny=4, nz=4,
 
 
 # ============================================================
+#  ⑤b 瞬态动力学 + 模态分析（对标 ANSYS 模态 / 瞬态求解）
+# ============================================================
+# 悬臂梁 Euler-Bernoulli 固有频率系数 βₙL（前 5 阶弯曲）
+_BETA_L = [1.875104068711961, 4.694091132974175,
+           7.854757438660411, 10.995540734879475,
+           14.137168387409627]
+
+
+def cantilever_euler_freqs(L: float, b: float, h: float, E: float, nu: float, rho: float, n: int = 8):
+    """
+    悬臂梁前 n 阶固有频率（Hz）解析谱：两个弯曲方向 + 轴向 + 扭转，升序排列。
+    3D 实体有限元的广义特征问题会按频率升序返回所有模态（含两个弯曲方向），
+    因此解析侧也必须给出完整的排序谱才能一一对标，而非只取单一弯曲方向。
+      弯曲 fₙ = (βₙL)²·sqrt(E·I/(m·L⁴))/(2π)，I 取 b·h³/12 与 h·b³/12 两族；
+      轴向 f = n/(2L)·sqrt(E/ρ)；扭转 f = 1/(2L)·sqrt(G·J/(ρ·Ip))。
+    """
+    m = rho * b * h
+    I1 = b * h ** 3 / 12.0          # 绕 y 轴弯曲（z 向挠度）
+    I2 = h * b ** 3 / 12.0          # 绕 z 轴弯曲（y 向挠度，较小 I → 较软，常为基频）
+    spec = []
+    for bl in _BETA_L:
+        spec.append((bl ** 2) * math.sqrt(E * I1 / (m * L ** 4)) / (2.0 * math.pi))
+        spec.append((bl ** 2) * math.sqrt(E * I2 / (m * L ** 4)) / (2.0 * math.pi))
+    for na in (1, 2):
+        spec.append(na / (2.0 * L) * math.sqrt(E / rho))            # 轴向
+    G = E / (2.0 * (1.0 + nu))
+    a, bb = max(b, h), min(b, h)
+    Jt = a * bb ** 3 * (1.0 / 3.0 - 0.21 * (bb / a) * (1.0 - (bb / a) ** 4 / 12.0))
+    Ip = (b ** 3 * h + h ** 3 * b) / 12.0
+    spec.append(1.0 / (2.0 * L) * math.sqrt(G * Jt / (rho * Ip)))   # 扭转
+    return sorted(spec)[:n]
+
+
+def hex20_mass_matrix(dx: float, dy: float, dz: float, rho: float) -> np.ndarray:
+    """参考二十节点六面体一致质量矩阵（60×60），ρ 为密度。27 点高斯积分。"""
+    Xc = np.zeros((20, 3))
+    for a, (xn, yn, zn, _) in enumerate(_HEX20):
+        Xc[a] = [xn * dx / 2.0, yn * dy / 2.0, zn * dz / 2.0]
+    Me = np.zeros((60, 60))
+    for xi in _GP3:
+        for eta in _GP3:
+            for ze in _GP3:
+                N = np.zeros(20)
+                dN = np.zeros((20, 3))
+                for a, (xn, yn, zn, t) in enumerate(_HEX20):
+                    N[a], dxi, deta, dze = _hex20_shape(xn, yn, zn, t, xi, eta, ze)
+                    dN[a] = [dxi, deta, dze]
+                J = dN.T @ Xc
+                detJ = np.linalg.det(J)
+                wgt = _GW3[_GP3.index(xi)] * _GW3[_GP3.index(eta)] * _GW3[_GP3.index(ze)]
+                Me += rho * np.kron(np.outer(N, N), np.eye(3)) * detJ * wgt
+    return Me
+
+
+def _assemble_KM(nodes, eles, dx, dy, dz, E, nu, rho):
+    """装配全局刚度 K 与一致质量 M（稀疏 CSR），并施加 x=0 端面固支约束。"""
+    mat = _ElasMat(E, nu)
+    Ke = hex20_stiffness(dx, dy, dz, mat)
+    Me = hex20_mass_matrix(dx, dy, dz, rho)
+    K = _assemble(nodes, eles, Ke)
+    M = _assemble(nodes, eles, Me)
+    nN = nodes.shape[0]
+    fixed = []
+    for g in range(nN):
+        if abs(nodes[g, 0]) < 1e-9:          # x=0 端面节点三向固定
+            fixed += [3 * g, 3 * g + 1, 3 * g + 2]
+    free = np.array(sorted(set(range(3 * nN)) - set(fixed)))
+    return K, M, free, fixed, nN
+
+
+def modal_cantilever(L, b, h, E, nu, rho, nx=12, ny=3, nz=3, n_modes=4):
+    """
+    求解悬臂梁前 n_modes 阶固有频率与振型（广义特征问题 Kφ=ω²Mφ）。
+    返回 (freqs_Hz, Phi, (nodes,eles,gc), (L,b,h,nx,ny,nz))。
+    """
+    nodes, eles, gc = brick_mesh20(L, b, h, nx, ny, nz)
+    dx, dy, dz = L / nx, b / ny, h / nz
+    K, M, free, fixed, nN = _assemble_KM(nodes, eles, dx, dy, dz, E, nu, rho)
+    Kff = K[free][:, free].tocsc()
+    Mff = M[free][:, free].tocsc()
+    k = min(n_modes, Kff.shape[0] - 1)
+    # 移频法（sigma=0）求最小特征值 → 最低阶模态
+    omega2, Phi = eigsh(Kff, k=k, M=Mff, sigma=0.0, which="LM")
+    idx = np.argsort(np.real(omega2))
+    omega2 = np.real(omega2)[idx]
+    freqs = np.sqrt(np.clip(omega2, 0, None)) / (2.0 * math.pi)
+    return freqs, Phi[:, idx], (nodes, eles, gc), (L, b, h, nx, ny, nz)
+
+
+def transient_step_cantilever(L, b, h, E, nu, rho, P, nx=12, ny=3, nz=3,
+                              dt=None, n_steps=None):
+    """
+    悬臂梁自由端突加阶跃载荷 P（沿 -z）的瞬态响应（Newmark-β 平均加速度法）。
+    无阻尼阶跃响应峰值 ≈ 2×静挠度（动态放大系数 DAF=2），作为解析基线。
+    时步自适应：覆盖最低阶模态约 2.5 个周期，确保峰值被捕捉（几何随机时周期差异大）。
+    Returns: (t_arr, tip_hist, peak_tip, static_tip, tip_dof)
+    """
+    nodes, eles, gc = brick_mesh20(L, b, h, nx, ny, nz)
+    dx, dy, dz = L / nx, b / ny, h / nz
+    K, M, free, fixed, nN = _assemble_KM(nodes, eles, dx, dy, dz, E, nu, rho)
+    Kff = K[free][:, free].tocsc()
+    Mff = M[free][:, free].tocsc()
+
+    # 自适应时步：最低阶弯曲模态周期 T1，dt ≤ T1/40，总时长 ≥ 2.5·T1（保守取较软方向）
+    I1 = b * h ** 3 / 12.0
+    I2 = h * b ** 3 / 12.0
+    omega1 = (1.875104068711961 ** 2) * math.sqrt(E * min(I1, I2) / (rho * b * h * L ** 4))
+    T1 = 2.0 * math.pi / max(omega1, 1e-6)
+    if dt is None:
+        dt = min(T1 / 40.0, 5.0e-3)
+    if n_steps is None:
+        n_steps = int(2.5 * T1 / dt) + 10
+
+    Ny, Nz = ny + 1, nz + 1
+    Ffull = np.zeros(3 * nN)
+    end_nodes = [gc(nx, j, k) for j in range(Ny) for k in range(Nz)]
+    f_per = -P / len(end_nodes)
+    for g in end_nodes:
+        Ffull[3 * g + 2] += f_per
+    Ff = Ffull[free]
+
+    # 静挠度（同一离散，作为 DAF 基准）
+    us = spsolve(Kff, Ff)
+    u_static_full = np.zeros(3 * nN)
+    u_static_full[free] = us
+    tip_g = gc(nx, Ny // 2, Nz // 2)
+    tip_dof = 3 * tip_g + 2
+    tip_local = int(np.where(free == tip_dof)[0][0])
+    static_tip = float(u_static_full[tip_dof])
+
+    # Newmark-β（β=1/4, γ=1/2，平均加速度法，无条件稳定，C=0 无数值阻尼）
+    beta, gamma = 0.25, 0.5
+    Khat = (Kff + Mff / (beta * dt ** 2)).tocsc()
+    lu = splu(Khat)
+    a0 = spsolve(Mff, Ff)                # M·a0 = F0（u0=v0=0）
+    u = np.zeros(Kff.shape[0])
+    v = np.zeros_like(u)
+    a = a0.copy()
+    tip_hist = [u[tip_local]]
+    for _ in range(n_steps):
+        rhs = Ff + Mff @ (u / (beta * dt ** 2) + v / (beta * dt)
+                          + a * (1.0 / (2.0 * beta) - 1.0))
+        un = lu.solve(rhs)
+        an = (un - u) / (beta * dt ** 2) - v / (beta * dt) + a * (1.0 - 1.0 / (2.0 * beta))
+        vn = v + dt * ((1.0 - gamma) * a + gamma * an)
+        u, v, a = un, vn, an
+        tip_hist.append(u[tip_local])
+    t_arr = np.arange(len(tip_hist)) * dt
+    peak_tip = float(np.max(np.abs(tip_hist)))
+    return t_arr, np.array(tip_hist), peak_tip, static_tip, tip_dof
+
+
+def calibrate_3d_modal(material_key: str = "steel",
+                       n_cases: int = 6,
+                       mesh: Tuple[int, int, int] = (12, 3, 3),
+                       seed: int = 7100) -> CalibrationResult:
+    """模态分析：1 阶固有频率（排序谱基频）vs Euler-Bernoulli 解析解（误差 ≤5% 达标）。"""
+    rng = np.random.RandomState(seed)
+    mat = MATERIALS[material_key]
+    E, nu, rho = mat.E, mat.nu, mat.rho
+    errs1, ana_list, num_list = [], [], []
+    t0 = time.perf_counter()
+    for _ in range(n_cases):
+        L = rng.uniform(0.5, 2.0)
+        b = rng.uniform(0.02, 0.06)
+        h = rng.uniform(0.01, 0.04)
+        freqs, *_ = modal_cantilever(L, b, h, E, nu, rho, *mesh, n_modes=4)
+        ana = cantilever_euler_freqs(L, b, h, E, nu, rho, n=4)
+        errs1.append(abs(freqs[0] - ana[0]) / ana[0] * 100.0)
+        ana_list.append(ana[0])
+        num_list.append(freqs[0])
+    elapsed = time.perf_counter() - t0
+    mean_err = float(np.mean(errs1))
+    return CalibrationResult(
+        scenario="beam_3d_modal_hex20",
+        analytical_baseline=float(np.mean(ana_list)),
+        numerical_mean=float(np.mean(num_list)),
+        numerical_std=float(np.std(num_list)),
+        relative_error_pct=round(mean_err, 3),
+        cv_pct=round(float(np.std(errs1) / np.mean(errs1) * 100) if errs1 else 0, 3),
+        meets_caliber=mean_err <= 5.0,
+        n_runs=n_cases,
+        wall_time_s=round(elapsed, 3),
+    )
+
+
+def calibrate_3d_transient(material_key: str = "steel",
+                           n_cases: int = 6,
+                           mesh: Tuple[int, int, int] = (12, 3, 3),
+                           seed: int = 7200) -> CalibrationResult:
+    """瞬态分析：无阻尼阶跃响应动态放大系数 DAF=peak/|static| vs 解析 2.0（误差 ≤5% 达标）。"""
+    rng = np.random.RandomState(seed)
+    mat = MATERIALS[material_key]
+    E, nu, rho = mat.E, mat.nu, mat.rho
+    rels, daf_list = [], []
+    t0 = time.perf_counter()
+    for _ in range(n_cases):
+        L = rng.uniform(0.5, 2.0)
+        b = rng.uniform(0.02, 0.06)
+        h = rng.uniform(0.01, 0.04)
+        P = rng.uniform(500, 8000)
+        _, hist, peak, static, _ = transient_step_cantilever(L, b, h, E, nu, rho, P, *mesh)
+        daf = peak / abs(static)
+        daf_list.append(daf)
+        rels.append(abs(daf - 2.0) / 2.0 * 100.0)
+    elapsed = time.perf_counter() - t0
+    mean_err = float(np.mean(rels))
+    return CalibrationResult(
+        scenario="beam_3d_transient_hex20",
+        analytical_baseline=2.0,
+        numerical_mean=float(np.mean(daf_list)),
+        numerical_std=float(np.std(daf_list)),
+        relative_error_pct=round(mean_err, 3),
+        cv_pct=round(float(np.std(rels) / np.mean(rels) * 100) if rels else 0, 3),
+        meets_caliber=mean_err <= 5.0,
+        n_runs=n_cases,
+        wall_time_s=round(elapsed, 3),
+    )
+
+
+def transient_timehistory_plotly(L=1.0, b=0.03, h=0.04, E=210e9, nu=0.3, rho=7850.0,
+                                 P=1000.0, nx=16, ny=4, nz=4, dt=2.0e-4, n_steps=150):
+    """返回 Plotly 时程图：自由端挠度 vs 时间，标注静挠度与 2×静挠度（DAF=2）。"""
+    import plotly.graph_objects as go
+    t_arr, hist, peak, static, _ = transient_step_cantilever(
+        L, b, h, E, nu, rho, P, nx, ny, nz, dt, n_steps)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=t_arr * 1000, y=np.array(hist) * 1000, mode="lines",
+                             line=dict(color="#185fa5", width=2), name="自由端挠度"))
+    fig.add_hline(y=abs(static) * 1000, line=dict(color="gray", dash="dash"),
+                  annotation_text="静挠度", annotation_position="bottom right")
+    fig.add_hline(y=2.0 * abs(static) * 1000, line=dict(color="#dc2626", dash="dot"),
+                  annotation_text="2×静挠度 (DAF=2)", annotation_position="top right")
+    fig.update_layout(
+        height=380, margin=dict(l=0, r=0, t=30, b=0),
+        title=f"悬臂梁阶跃载荷瞬态响应（Newmark-β，自研 Hex20）｜ DAF={peak/abs(static):.3f}",
+        xaxis_title="时间 (ms)", yaxis_title="自由端挠度 (mm)",
+    )
+    return fig
+
+
+# ============================================================
 #  ⑥ 自检
 # ============================================================
 def run_demo() -> None:
@@ -491,6 +736,22 @@ def run_demo() -> None:
         print(f"    数值均值 : {res.numerical_mean:.6e} ± {res.numerical_std:.6e}")
         print(f"    相对误差 : {res.relative_error_pct:.3f}%")
         print(f"    工况数   : {res.n_runs}  耗时: {res.wall_time_s}s")
+
+    # ---- 动力学亮点展示（代表性工况，明确展示模态/瞬态对标）----
+    print("\n  ── 动力学亮点 ─────────────────────────────────────────")
+    m_ = MATERIALS["steel"]
+    L, b, h = 1.0, 0.03, 0.04
+    freqs, *_ = modal_cantilever(L, b, h, m_.E, m_.nu, m_.rho, 16, 4, 4, 4)
+    ana_f = cantilever_euler_freqs(L, b, h, m_.E, m_.nu, m_.rho, 4)
+    print(f"  悬臂梁固有频率 (Hz)   数值 vs Euler-Bernoulli 解析")
+    for i in range(4):
+        e = abs(freqs[i] - ana_f[i]) / ana_f[i] * 100.0
+        print(f"    阶 {i + 1}: FEM={freqs[i]:8.3f}  解析={ana_f[i]:8.3f}  误差={e:6.2f}%")
+    t_arr, hist, peak, static, _ = transient_step_cantilever(
+        L, b, h, m_.E, m_.nu, m_.rho, 1000.0, 16, 4, 4)
+    daf = peak / abs(static)
+    print(f"  阶跃响应 动态放大系数 DAF={daf:.4f}  (解析=2.0000, 误差={abs(daf - 2.0) / 2.0 * 100:.2f}%)")
+    print("  （Newmark-β 平均加速度法，无阻尼，峰值≈2×静挠度）")
 
     print("\n" + "=" * 70)
     overall = "ALL PASS" if all_pass else "SOME FAIL"
